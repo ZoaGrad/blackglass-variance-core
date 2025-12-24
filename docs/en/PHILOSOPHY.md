@@ -37,7 +37,7 @@ This ensures that every task produces a trail of evidence that can be reviewed, 
 
 ## 🛸 How It Works
 
-The agent follows a strict "Think-Act-Reflect" loop, simulating the cognitive process of Gemini 3.
+The agent follows a strict "Think-Act-Reflect" loop, simulating the cognitive process of Gemini 2.0 Flash.
 
 ```mermaid
 sequenceDiagram
