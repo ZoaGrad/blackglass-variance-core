@@ -125,6 +125,7 @@ This is **not** another LangChain wrapper. It's a minimal, transparent workspace
 | ⚡ **Gemini Native** | Optimized for Gemini 2.0 Flash |
 | 🌐 **LLM Agnostic** | Use OpenAI, Azure, Ollama, or any OpenAI-compatible API |
 | 📂 **Artifact-First** | Every task produces plans, logs, and evidence |
+| 🔒 **Sandbox Execution** | Configurable code execution environments (local by default) |
 
 ## 📚 Documentation
 
@@ -136,6 +137,34 @@ This is **not** another LangChain wrapper. It's a minimal, transparent workspace
 - **[MCP Integration](docs/en/MCP_INTEGRATION.md)** — External tool connectivity
 - **[Swarm Protocol](docs/en/SWARM_PROTOCOL.md)** — Multi-agent coordination
 - **[Roadmap](docs/en/ROADMAP.md)** — Future phases & vision
+
+### Sandbox Configuration (Zero-Config by default)
+
+The sandbox lets the agent execute generated Python code safely and consistently. It defaults to a local subprocess with isolation and limits.
+
+- `SANDBOX_TYPE`: `local` (default) | `docker` (opt-in) | `e2b` (future)
+- `SANDBOX_TIMEOUT_SEC`: maximum execution time in seconds (default `30`)
+- `SANDBOX_MAX_OUTPUT_KB`: truncate stdout/stderr to limit size (default `10`)
+
+Docker (opt-in) extra variables:
+- `DOCKER_IMAGE` (default `python:3.11-slim`)
+- `DOCKER_NETWORK_ENABLED` (`false` by default)
+- `DOCKER_CPU_LIMIT` (default `0.5` cores)
+- `DOCKER_MEMORY_LIMIT` (default `256m`)
+
+Example:
+
+```bash
+export SANDBOX_TYPE=local
+export SANDBOX_TIMEOUT_SEC=30
+export SANDBOX_MAX_OUTPUT_KB=10
+# Docker mode
+# export SANDBOX_TYPE=docker
+# export DOCKER_IMAGE=python:3.11-slim
+# export DOCKER_NETWORK_ENABLED=false
+# export DOCKER_CPU_LIMIT=0.5
+# export DOCKER_MEMORY_LIMIT=256m
+```
 
 ## 🏗️ Project Structure
 
