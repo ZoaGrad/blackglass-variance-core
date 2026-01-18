@@ -1,0 +1,20 @@
+{
+    "status": "ok",
+    "mode": "engine",
+    "objective": "Analyze variance and detect interdiction opportunities",
+    "findings": [
+        {
+            "type": "PREDICTION",
+            "signal": "QUEUE_SATURATION",
+            "time": "13:58",
+            "value": 85,
+            "threshold": 50,
+            "confidence": 0.9,
+            "evidence": [
+                "metrics.json:13:58 queue_depth=85",
+                "checkout.log: WARN WorkerThreadUtilization"
+            ]
+        }
+    ],
+    "verdict": "INTERDICT_QUEUE"
+}

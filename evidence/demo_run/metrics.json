@@ -1,0 +1,9 @@
+[
+  {
+    "timestamp": "13:45",
+    "service": "checkout-service",
+    "queue_depth": 11,
+    "availability": 99.99,
+    "latency_ms": 45
+  }
+]
