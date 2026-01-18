@@ -15,13 +15,13 @@ It is intentionally separated into two layers:
 
 ```mermaid
 flowchart LR
-  A[Signal Source\n(simulate.exe or real telemetry)] --> B[Artifacts\nmetrics.json + logs + report.html]
-  B --> C[Variance Analysis\n(analyze_variance / RLM Engine)]
-  C --> D[Decision Layer\n(recommend_mitigation)]
-  D --> E[Watchtower\n(watch_variance loop)]
-  E -->|writes| F[Evidence Vault\n(evidence/watch_*/)]
-  E -->|heartbeat| G[watchtower_runtime.json]
-  E -->|rotates| H[watchtower.log]
+  A["Signal Source<br/>(simulate.exe or real telemetry)"] --> B["Artifacts<br/>metrics.json + logs + report.html"]
+  B --> C["Variance Analysis<br/>(analyze_variance / RLM Engine)"]
+  C --> D["Decision Layer<br/>(recommend_mitigation)"]
+  D --> E["Watchtower<br/>(watch_variance loop)"]
+  E -->|writes| F["Evidence Vault<br/>(evidence/watch_*/)"]
+  E -->|heartbeat| G["watchtower_runtime.json"]
+  E -->|rotates| H["watchtower.log"]
 ```
 
 ### Separation of Concerns
@@ -29,17 +29,17 @@ flowchart LR
 ```mermaid
 flowchart TB
   subgraph VC[Variance Core]
-    VC1[Physics Generator\nsimulate.exe (HTML)] 
-    VC2[Artifact Generator\nblackglass/simulate.py\n(metrics + logs)]
-    VC3[Analyzer\nblackglass/rlm/run.py\n(evidence-based)]
+    VC1["Physics Generator<br/>simulate.exe (HTML)"] 
+    VC2["Artifact Generator<br/>blackglass/simulate.py<br/>(metrics + logs)"]
+    VC3["Analyzer<br/>blackglass/rlm/run.py<br/>(evidence-based)"]
     VC1 --> VC2 --> VC3
   end
 
   subgraph WT[Watchtower]
-    WT1[Continuous Loop\nwatch_variance.py]
-    WT2[Thresholds + Debounce]
-    WT3[Interdiction Events]
-    WT4[Mitigation Planner]
+    WT1["Continuous Loop<br/>watch_variance.py"]
+    WT2["Thresholds + Debounce"]
+    WT3["Interdiction Events"]
+    WT4["Mitigation Planner"]
     WT1 --> WT2 --> WT3 --> WT4
   end
 
