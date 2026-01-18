@@ -31,6 +31,13 @@ See: **[evidence/demo_run/](evidence/demo_run/)**
 *   **Intelligence**: `analysis.json` predicting failure with 0.9 confidence.
 *   **Action**: `mitigation_plan.json` triggering `SCALE_WORKERS` before the drop.
 
+## ✅ Verification & Proof
+
+- **Architecture**: `ARCHITECTURE.md`
+- **Proof-of-Life**: `evidence/demo_run/`
+- **Visual Evidence**: `assets/dashboard_evidence.png`, `assets/log_evidence.png`
+- **Trace**: `WALKTHROUGH.md`
+
 ## 🚀 Quick Run
 
 You can verify the system's logic on your own machine in 60 seconds:
