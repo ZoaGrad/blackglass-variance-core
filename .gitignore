@@ -41,3 +41,18 @@ venv.bak/
 logs/
 data/
 .opencode/
+
+# Runtime / Agent State
+watchtower.log
+watchtower_runtime.json
+.watchtower.lock
+agent_memory.json
+*.log
+
+# Runs / Evidence Exhaust
+runs/
+evidence/
+report.html
+metrics.json
+analysis.json
+checkout.log

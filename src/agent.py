@@ -1,4 +1,5 @@
 import json
+import re
 import time
 import os
 import sys
@@ -47,10 +48,10 @@ class GeminiAgent:
             self._initialize_mcp()
 
         print(
-            f"🤖 Initializing {self.settings.AGENT_NAME} with model {self.settings.GEMINI_MODEL_NAME}..."
+            f"[AGENT] Initializing {self.settings.AGENT_NAME} with model {self.settings.GEMINI_MODEL_NAME}..."
         )
         print(
-            f"   📦 Discovered {len(self.available_tools)} tools: {', '.join(list(self.available_tools.keys())[:10])}{'...' if len(self.available_tools) > 10 else ''}"
+            f"   [TOOLS] Discovered {len(self.available_tools)} tools: {', '.join(list(self.available_tools.keys())[:10])}{'...' if len(self.available_tools) > 10 else ''}"
         )
 
         # Initialize the GenAI client if credentials are available. Some test
@@ -88,14 +89,14 @@ class GeminiAgent:
                     if self.settings.OPENAI_BASE_URL:
                         self.use_openai_backend = True
                         print(
-                            f"🔄 Using OpenAI-compatible backend at {self.settings.OPENAI_BASE_URL} "
+                            f"[OPENAI] Using OpenAI-compatible backend at {self.settings.OPENAI_BASE_URL} "
                             f"with model {self.settings.OPENAI_MODEL}"
                         )
                         self.client = None  # Not used when proxying to OpenAI
                     else:
                         raise ValueError("No GOOGLE_API_KEY or OPENAI_BASE_URL configured")
             except Exception as e:
-                print(f"⚠️ genai client not initialized: {e}")
+                print(f"[WARN] genai client not initialized: {e}")
 
                 class _DummyClientFallback:
                     class _Models:
@@ -124,7 +125,7 @@ class GeminiAgent:
             from src.mcp_client import MCPClientManagerSync
             from src.tools.mcp_tools import _set_mcp_manager
 
-            print("🔌 Initializing MCP integration...")
+            print("[MCP] Initializing MCP integration...")
 
             # Create and initialize the MCP manager
             self.mcp_manager = MCPClientManagerSync()
@@ -138,13 +139,13 @@ class GeminiAgent:
 
             if mcp_tools:
                 self.available_tools.update(mcp_tools)
-                print(f"   🔧 Loaded {len(mcp_tools)} MCP tools")
+                print(f"   [MCP] Loaded {len(mcp_tools)} MCP tools")
 
         except ImportError as e:
-            print(f"   ⚠️ MCP library not installed: {e}")
+            print(f"   [WARN] MCP library not installed: {e}")
             print("      To enable MCP, run: pip install 'mcp[cli]'")
         except Exception as e:
-            print(f"   ⚠️ Failed to initialize MCP: {e}")
+            print(f"   [WARN] Failed to initialize MCP: {e}")
 
     def _load_tools(self) -> Dict[str, Callable[..., Any]]:
         """
@@ -164,7 +165,7 @@ class GeminiAgent:
         tools_dir = Path(__file__).parent / "tools"
 
         if not tools_dir.exists():
-            print(f"⚠️ Tools directory not found: {tools_dir}")
+            print(f"[WARN] Tools directory not found: {tools_dir}")
             return tools
 
         # Iterate through all Python files in the tools directory
@@ -192,10 +193,10 @@ class GeminiAgent:
                             and obj.__module__ == f"src.tools.{module_name}"
                         ):
                             tools[name] = obj
-                            print(f"   ✓ Loaded tool: {name} from {module_name}.py")
+                            print(f"   [OK] Loaded tool: {name} from {module_name}.py")
 
             except Exception as e:
-                print(f"   ⚠️ Failed to load tools from {tool_file.name}: {e}")
+                print(f"   [WARN] Failed to load tools from {tool_file.name}: {e}")
 
         return tools
 
@@ -225,10 +226,10 @@ class GeminiAgent:
                 content = context_file.read_text(encoding="utf-8")
                 context_parts.append(f"\n--- {context_file.name} ---\n{content}")
             except Exception as e:
-                print(f"   ⚠️ Failed to load context from {context_file.name}: {e}")
+                print(f"   [WARN] Failed to load context from {context_file.name}: {e}")
 
         if context_parts:
-            print(f"   📚 Loaded context from {len(context_parts)} file(s)")
+            print(f"   [CONTEXT] Loaded context from {len(context_parts)} file(s)")
 
         return "\n".join(context_parts)
 
@@ -297,14 +298,25 @@ class GeminiAgent:
         2) Plain text line starting with 'Action: <tool_name>'
         """
         cleaned = response_text.strip()
+        
+        # Strip markdown code blocks if present
+        if "```" in cleaned:
+            cleaned = re.sub(r"^```\w*\n", "", cleaned)
+            cleaned = re.sub(r"\n```$", "", cleaned)
+            cleaned = cleaned.strip()
 
+        # Robust JSON extraction: Find first { and last }
         try:
-            payload = json.loads(cleaned)
-            if isinstance(payload, dict):
-                action = payload.get("action") or payload.get("tool")
-                args = payload.get("args") or payload.get("input") or {}
-                if action:
-                    return str(action), args if isinstance(args, dict) else {}
+            start = cleaned.find("{")
+            end = cleaned.rfind("}")
+            if start != -1 and end != -1:
+                candidate = cleaned[start : end + 1]
+                payload = json.loads(candidate)
+                if isinstance(payload, dict):
+                    action = payload.get("action") or payload.get("tool")
+                    args = payload.get("args") or payload.get("input") or {}
+                    if action:
+                        return str(action), args if isinstance(args, dict) else {}
         except json.JSONDecodeError:
             pass
 
@@ -363,7 +375,7 @@ class GeminiAgent:
             summarizer=self.summarize_memory,
         )
 
-        print(f"\n🤔 <thought> Analyzing task: '{task}'")
+        print(f"\n[THINK] <thought> Analyzing task: '{task}'")
         print(f"   - Loaded context messages: {len(context_window)}")
         print("   - Checking mission context...")
         print("   - Identifying necessary tools...")
@@ -405,14 +417,17 @@ class GeminiAgent:
             formatted_context = self._format_context_messages(context_messages)
             initial_prompt = f"{formatted_context}\n\nCurrent Task: {task}"
 
-            print("💬 Sending request to Gemini...")
-            first_reply = self._call_gemini(initial_prompt)
-            tool_name, tool_args = self._extract_tool_call(first_reply)
+            print("[CHAT] Sending request to Gemini...")
+            response = self._call_gemini(initial_prompt)
+            tool_name, tool_args = self._extract_tool_call(response)
 
-            final_response = first_reply
+            MAX_TOOL_STEPS = 5
+            steps = 0
 
-            if tool_name:
+            while tool_name and steps < MAX_TOOL_STEPS:
+                steps += 1
                 tool_fn = self.available_tools.get(tool_name)
+                
                 if not tool_fn:
                     observation = f"Requested tool '{tool_name}' is not registered."
                 else:
@@ -424,31 +439,36 @@ class GeminiAgent:
                         observation = f"Unexpected error in tool '{tool_name}': {exc}"
 
                 # Record intermediate reasoning and observation
-                self.memory.add_entry("assistant", first_reply)
+                self.memory.add_entry("assistant", response)
                 self.memory.add_entry("tool", f"{tool_name} output: {observation}")
 
-                # Refresh context to include tool feedback before final answer
+                # Refresh context to include tool feedback before next step
                 context_messages = self.memory.get_context_window(
                     system_prompt=system_prompt,
                     max_messages=10,
                     summarizer=self.summarize_memory,
                 )
                 formatted_context = self._format_context_messages(context_messages)
+                
+                # Ask for next step (either another tool or final answer)
                 follow_up_prompt = (
                     f"{formatted_context}\n\n"
                     f"Tool '{tool_name}' observation: {observation}\n"
-                    "Use the observation above to craft the final answer for the user. "
-                    "Do not request additional tool calls."
+                    "Use the observation above to determine the next step. "
+                    "If you need another tool, output the JSON tool call. "
+                    "If you have the final answer, output it directly."
                 )
-                print(f"💬 Sending follow-up with observation from '{tool_name}'...")
-                final_response = self._call_gemini(follow_up_prompt)
+                print(f"[CHAT] Sending follow-up with observation from '{tool_name}'...")
+                response = self._call_gemini(follow_up_prompt)
+                tool_name, tool_args = self._extract_tool_call(response)
 
+            final_response = response
             self.memory.add_entry("assistant", final_response)
             return final_response
 
         except Exception as e:
             response = f"Error generating response: {str(e)}"
-            print(f"❌ API Error: {e}")
+            print(f"[ERROR] API Error: {e}")
             return response
 
     def reflect(self):
@@ -460,9 +480,9 @@ class GeminiAgent:
 
     def run(self, task: str):
         """Main entry point for the agent."""
-        print(f"🚀 Starting Task: {task}")
+        print(f"[START] Starting Task: {task}")
         result = self.act(task)
-        print(f"📦 Result: {result}")
+        print(f"[RESULT] Result: {result}")
         self.reflect()
 
     def shutdown(self) -> None:
@@ -476,7 +496,7 @@ class GeminiAgent:
         if self.mcp_manager:
             print("🔌 Shutting down MCP connections...")
             self.mcp_manager.shutdown()
-        print("👋 Agent shutdown complete.")
+        print("[EXIT] Agent shutdown complete.")
 
     def get_mcp_status(self) -> Dict[str, Any]:
         """
