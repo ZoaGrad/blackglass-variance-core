@@ -70,6 +70,9 @@ python -m src.agent watch --cycles 10 --output-dir build/evidence
 
 # Simulate a specific drift scenario (0.0 - 1.0)
 python -m src.agent simulate --drift 0.8 --duration 60 --output-dir runs/test_drift
+
+# Integration Adapters (Prometheus Stub + K8s Stub)
+python -m src.agent watch --telemetry prometheus --actuation k8s
 ```
 
 ## 🛡️ Reliability Engineering Features

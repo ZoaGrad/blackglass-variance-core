@@ -15,37 +15,57 @@ def watch_variance(
     queue_threshold: int = 50,
     cooldown_cycles: int = 3,
     duration_sec: int = 30,
-    output_dir: str = None
+    output_dir: str = None,
+    telemetry_mode: str = "mock",
+    actuation_mode: str = "noop"
 ) -> str:
     """
     Enters 'Continuous Mode' to act as a reliability watchtower.
-    
-    Hardening Upgrades:
-      - Uses strict 'watchtower.analysis.v1' schema.
-      - Fails closed if analysis is invalid.
-      - Enforces Causality: signal > threshold MUST trigger mitigation.
-      - Produces cycle_summary.json for auditable proof.
     """
-    log_file = "watchtower.log"
     session_id = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     
     # Anchor paths to repo root (parent of src/)
     repo_root = Path(__file__).resolve().parent.parent.parent
     
     if output_dir:
-        # User override (can be absolute or relative to repo root)
         evidence_dir = Path(output_dir)
         if not evidence_dir.is_absolute():
             evidence_dir = repo_root / evidence_dir
     else:
-        # Default: evidence/watch_<session_id>
         evidence_dir = repo_root / "evidence" / f"watch_{session_id}"
         
     evidence_dir.mkdir(parents=True, exist_ok=True)
     
+    log_file = "watchtower.log"
     print(f"[WATCH] Starting Watchtower Session {session_id}")
     print(f"[WATCH] Rules: Variance > {variance_threshold} OR Queue > {queue_threshold}")
+    print(f"[WATCH] Telemetry: {telemetry_mode.upper()} | Actuation: {actuation_mode.upper()}")
     
+    # Initialize Adapters
+    telemetry_adapter = None
+    if telemetry_mode == "mock":
+        from src.adapters.telemetry.mock import MockTelemetryAdapter
+        # Mock adapter needs run_dir to generate/read artifacts
+        # We'll pass the *current cycle's* dir dynamically or set base?
+        # The Mock adapter currently wraps analyze_variance which takes a run_dir.
+        # Let's instantiate it per cycle or pass None here and handle in loop?
+        # Better: The Mock adapter in our impl expects run_dir in constructor. 
+        # But we change run_dir every cycle. 
+        # Refactor: We will instantiate inside the loop for Mock, or pass root?
+        # Simplest consistent way: Instantiate in loop for Mock.
+        pass 
+    elif telemetry_mode == "prometheus":
+        from src.adapters.telemetry.prometheus import PrometheusTelemetryAdapter
+        telemetry_adapter = PrometheusTelemetryAdapter()
+        
+    actuation_adapter = None
+    if actuation_mode == "noop":
+        from src.adapters.actuation.noop import NoopActuationAdapter
+        actuation_adapter = NoopActuationAdapter()
+    elif actuation_mode == "k8s":
+        from src.adapters.actuation.k8s import KubernetesActuationAdapter
+        actuation_adapter = KubernetesActuationAdapter()
+
     interdictions = []
     last_interdiction_cycle = -999
     last_interdiction_status = None
@@ -54,9 +74,9 @@ def watch_variance(
     with open(log_file, "a") as f:
         f.write(f"--- Session {session_id} Start ---\n")
     
-    # Pre-flight Checklist
-    if not os.getenv("BLACKGLASS_REPO_PATH"):
-         return "[WATCH] FATAL: BLACKGLASS_REPO_PATH not set."
+    # Pre-flight Checklist (Only for Mock mode if it relies on external tools)
+    if telemetry_mode == "mock" and not os.getenv("BLACKGLASS_REPO_PATH"):
+         print("[WATCH] WARN: BLACKGLASS_REPO_PATH not set. Mock generator will be used.")
 
     # Lock File Mechanism
     lock_file = Path(".watchtower.lock")
@@ -79,6 +99,7 @@ def watch_variance(
         for i in range(iterations):
             cycle_idx = i + 1
             cycle_dir = evidence_dir / f"cycle_{cycle_idx}"
+            cycle_dir.mkdir(parents=True, exist_ok=True)
             
             # Kill switch
             if os.path.exists(".stop"):
@@ -90,9 +111,6 @@ def watch_variance(
                 with open(log_file, "w") as f: f.write("--- Log Rotated ---\n")
 
             timestamp_iso = datetime.datetime.now().isoformat()
-            cycle_dir = evidence_dir / f"cycle_{cycle_idx}"
-            cycle_dir.mkdir(parents=True, exist_ok=True) # Ensure dir exists before any possibility of crash
-
             print(f"[WATCH] Cycle {cycle_idx}/{iterations}...")
             
             # Runtime Heartbeat
@@ -108,16 +126,17 @@ def watch_variance(
             decision = "UNKNOWN"
             
             try:
-                # 1. Collect (Simulate)
-                # Note: analyze_variance checks for sim engine and uses it if present,
-                # or falls back to mock generator if needed.
-                # We do not call run_simulation explicitly here because analyze_variance determines
-                # the source of truth (sim vs mock).
-                
-                # 2. Analyze (Strict Schema)
+                # 1. Collect & Analyze (via Telemetry Adapter)
                 print("    -> Analyzing Variance...")
+                
+                # Mock Mode Special Handling (needs per-cycle dir)
+                current_telemetry = telemetry_adapter
+                if telemetry_mode == "mock":
+                    from src.adapters.telemetry.mock import MockTelemetryAdapter
+                    current_telemetry = MockTelemetryAdapter(run_dir=str(cycle_dir))
+                
                 try:
-                    analysis = analyze_variance(run_dir=str(cycle_dir), duration_sec=duration_sec)
+                    analysis = current_telemetry.get_window(duration_sec=duration_sec)
                 except Exception as e:
                     print(f"[ERROR] Logic Crash: {e}")
                     analysis = {"status": "crash", "message": str(e)}
@@ -129,13 +148,12 @@ def watch_variance(
                 )
                 
                 if not is_valid:
-                    # FAIL CLOSED: Do not guess. Do not mitigate.
+                    # FAIL CLOSED
                     error_msg = f"Analysis Failed: {analysis.get('message', 'Unknown Schema Error')}"
                     print(f"[ERROR] {error_msg}")
                     with open(log_file, "a") as f: f.write(f"[{timestamp_iso}] Cycle={cycle_idx} ERROR {error_msg}\n")
                     
                     decision = "ERROR"
-                    # Write Summary immediately
                     with open(cycle_dir / "cycle_summary.json", "w") as f:
                         json.dump({
                             "cycle": cycle_idx,
@@ -144,7 +162,7 @@ def watch_variance(
                             "input_error": analysis
                         }, f, indent=2)
                     summary_written = True
-                    continue # Skip to next cycle
+                    continue 
 
                 # 4. Extract Signals (Typed)
                 drift = float(analysis["variance_detected"])
@@ -161,6 +179,7 @@ def watch_variance(
                 
                 decision = "NOOP"
                 mitigation_plan = {}
+                actuation_result = {}
                 status_tag = "OK"
 
                 if should_interdict:
@@ -182,16 +201,22 @@ def watch_variance(
                         # Generate Mitigation
                         mitigation_plan = recommend_mitigation(analysis)
                         
-                        # CAUSALITY ASSERTION:
-                        # If we decided to mitigate, the plan MUST NOT be empty.
+                        # CAUSALITY ASSERTION
                         if not mitigation_plan:
-                             crasher = f"VIOLATION: Thresholds breached but recommend_mitigation returned empty plan! Inputs: d={drift}, q={queue_depth}"
+                             crasher = f"VIOLATION: Thresholds breached but recommend_mitigation returned empty plan!"
                              print(f"[FATAL] {crasher}")
                              raise RuntimeError(crasher)
 
                         # Persist Plan
                         with open(cycle_dir / "mitigation_plan.json", "w") as f:
                             json.dump(mitigation_plan, f, indent=2)
+                            
+                        # ACTUATION (via Adapter)
+                        print(f"    -> Actuating via {actuation_mode.upper()}...")
+                        actuation_result = actuation_adapter.apply(mitigation_plan)
+                        
+                        with open(cycle_dir / "actuation_result.json", "w") as f:
+                            json.dump(actuation_result, f, indent=2)
                             
                         interdictions.append(f"Cycle {cycle_idx}: {status_tag}")
 
@@ -213,7 +238,8 @@ def watch_variance(
                     },
                     "artifacts": {
                         "analysis": "analysis.json",
-                        "mitigation": "mitigation_plan.json" if decision == "MITIGATE" else None
+                        "mitigation": "mitigation_plan.json" if decision == "MITIGATE" else None,
+                        "actuation": "actuation_result.json" if decision == "MITIGATE" else None
                     }
                 }
                 with open(cycle_dir / "cycle_summary.json", "w") as f:

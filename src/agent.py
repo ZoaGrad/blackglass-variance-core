@@ -544,6 +544,10 @@ if __name__ == "__main__":
         watch_parser.add_argument("--interval", type=int, default=5, help="Seconds between cycles")
         watch_parser.add_argument("--output-dir", type=str, default=None, help="Override evidence directory")
         watch_parser.add_argument("--seed", type=int, default=None, help="Random seed for simulation")
+        
+        # Integration Adapters
+        watch_parser.add_argument("--telemetry", choices=["mock", "prometheus"], default="mock", help="Telemetry Source")
+        watch_parser.add_argument("--actuation", choices=["noop", "k8s"], default="noop", help="Actuation Target")
 
         # SIMULATE
         sim_parser = subparsers.add_parser("simulate", help="Run metrics simulation only")
@@ -565,7 +569,9 @@ if __name__ == "__main__":
                     iterations=args.cycles,
                     interval_sec=args.interval,
                     variance_threshold=0.15,
-                    output_dir=args.output_dir
+                    output_dir=args.output_dir,
+                    telemetry_mode=args.telemetry,
+                    actuation_mode=args.actuation
                     # Seed support would need to be passed down if implemented in watch_variance
                 )
                 print(result)

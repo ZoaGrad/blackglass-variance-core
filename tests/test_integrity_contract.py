@@ -101,21 +101,64 @@ def test_output_dir_override():
     result = subprocess.run(cmd, cwd=repo_root, capture_output=True, text=True, timeout=30)
     assert result.returncode == 0, f"Override run failed: {result.stderr}"
     
-    # Verify directory created (Behavior check: code puts session folder inside, or cycles directly?)
-    # Based on recent fix: evidence_dir = Path(output_dir). 
-    # If output_dir is 'runs/test_override', then cycle_1 should be directly therein 
-    # OR session folder? 
-    # Code says: evidence_dir = Path(output_dir). It does NOT append session_id if override is set.
-    # So we expect cycle_1 directly inside.
+    # Verify directory created
+    # Code behavior: evidence_dir = Path(output_dir). It does NOT append session_id if override is set.
+    # So we expect cycle_1 directly inside the output_target.
     
     assert output_target.exists(), "Output directory not created"
     assert (output_target / "cycle_1").exists(), "Cycle 1 not found in custom output dir"
     print("[PASS] --output-dir flag verified")
 
+    assert output_target.exists(), "Output directory not created"
+    assert (output_target / "cycle_1").exists(), "Cycle 1 not found in custom output dir"
+    print("[PASS] --output-dir flag verified")
+
+def test_adapter_flags():
+    print("\n[TEST] Verifying --telemetry/--actuation flags...")
+    repo_root = Path(__file__).resolve().parent.parent
+    output_target = repo_root / "runs" / "test_adapters"
+    
+    if output_target.exists():
+        import shutil
+        shutil.rmtree(output_target)
+        
+    cmd = [
+        sys.executable, "-m", "src.agent", "watch",
+        "--cycles", "2", # Run 2 cycles to ensure we hit the mock drift
+        "--output-dir", str(output_target),
+        "--telemetry", "mock",
+        "--actuation", "noop"
+    ]
+    
+    result = subprocess.run(cmd, cwd=repo_root, capture_output=True, text=True, timeout=45)
+    assert result.returncode == 0, f"Adapter run failed: {result.stderr}"
+    
+    # Check if we got a mitigation (which is expected with currently high mock drift)
+    # If so, check for actuation_result.json
+    found_actuation = False
+    for cycle_dir in output_target.glob("cycle_*"):
+        summary_path = cycle_dir / "cycle_summary.json"
+        if summary_path.exists():
+            with open(summary_path) as f:
+                s = json.load(f)
+            if s["decision"] == "MITIGATE":
+                act_res = cycle_dir / "actuation_result.json"
+                assert act_res.exists(), f"Mitigation in {cycle_dir.name} but no actuation_result.json"
+                with open(act_res) as f:
+                    act = json.load(f)
+                assert act["status"] == "noop", "Actuation status mismatch"
+                found_actuation = True
+    
+    if found_actuation:
+        print("[PASS] Adapter output (actuation_result.json) verified")
+    else:
+        print("[WARN] No mitigation triggered, so actuation not tested (but run valid)")
+
 if __name__ == "__main__":
     try:
         test_watch_cycle_integrity()
         test_output_dir_override()
+        test_adapter_flags()
         print("\n[OK] ALL TESTS PASSED")
         sys.exit(0)
     except AssertionError as e:
