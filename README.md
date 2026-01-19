@@ -75,6 +75,14 @@ python -m src.agent simulate --drift 0.8 --duration 60 --output-dir runs/test_dr
 python -m src.agent watch --telemetry prometheus --actuation k8s
 ```
 
+## Real-World Validations
+Blackglass is not just theoretical. We validate our kernel against Sovereign Grade targets.
+
+*   **[CASE STUDY: OpenBB Financial Platform Audit](docs/CASE_STUDY_OPENBB.md)**
+    *   **Target:** `OpenBB` (Investment Research Platform)
+    *   **Variance Score:** `1544` (High Risk)
+    *   **Findings:** 304 Blocking calls detected. Systemic potential for "Hydrostatic Lock."
+
 ## 🛡️ Reliability Engineering Features
 
 *   **Singleton Enforcement**: Uses `.watchtower.lock` with stale-lock recovery (>5m) to prevent race conditions.
