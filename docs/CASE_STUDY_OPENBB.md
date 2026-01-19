@@ -45,11 +45,11 @@ The following evidence was captured from the public OpenBB repository on 2026-01
 *Target:* `.github/scripts/summarize_changelog.py`
 *Observation:* Distinct `requests.get` call without robust interdiction.
 
-![Blocking Call Evidence](file:///C:/Users/colem/.gemini/antigravity/brain/134232aa-8cee-44fc-be96-40eb24c4dbb9/openbb_requests_get_evidence_1768838244939.png)
+![Blocking Call Evidence](../assets/openbb_blocking.png)
 
 ### Exhibit B: Technical Debt / Entropy
 *Target:* `build/pypi/openbb_platform/publish.py`
 *Observation:* Explicit `TODO` markers indicating unfinished logic in build pipelines.
 
-![Entropy Evidence](file:///C:/Users/colem/.gemini/antigravity/brain/134232aa-8cee-44fc-be96-40eb24c4dbb9/openbb_todo_evidence_1768838327807.png)
+![Entropy Evidence](../assets/openbb_entropy.png)
 
