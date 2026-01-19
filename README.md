@@ -93,7 +93,7 @@ Real-world validation of the Blackglass Variance Engine against sovereign-grade 
     *   *Deep dive into 306 blocking call sites and reliability interdiction.*
 
 ### 📄 Strategic Intelligence
-* **[WHITE PAPER: The Physics of Failure (Hydrostatic Lock)](docs/Forensic%20Audit%20-%20Agentic%20Systems.pdf)**
+* **[WHITE PAPER: The Physics of Failure (Hydrostatic Lock)](docs/WHITE_PAPER_PHYSICS_OF_FAILURE.md)**
   * *Federal-Grade analysis of why synchronous agents fail in high-variance environments.*
 
 ## 🛡️ Reliability Engineering Features
