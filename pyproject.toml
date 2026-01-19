@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "blackglass_variance_core"
+version = "0.1.0"
+description = "Sovereign Reliability Engineering & Variance Monitoring System"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+  { name = "Blackglass Continuum", email = "architect@blackglass.ai" },
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Topic :: System :: Monitoring",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["blackglass*"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true

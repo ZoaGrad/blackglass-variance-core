@@ -1,5 +1,12 @@
 # Blackglass Watchtower — Predictive Reliability System
 
+![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=flat-square)
+![License](https://img.shields.io/badge/license-Sovereign-blueviolet?style=flat-square)
+![Python](https://img.shields.io/badge/python-3.11%2B-blue?style=flat-square)
+![Code Style](https://img.shields.io/badge/code%20style-ruff-000000?style=flat-square)
+![Version](https://img.shields.io/badge/version-v0.1.0--alpha-orange?style=flat-square)
+
+
 > **"Most downtime happens because systems wait for failure to trigger alerts. Watchtower inverts this by acting on variance before thresholds break."**
 
 ---
@@ -84,6 +91,10 @@ Real-world validation of the Blackglass Variance Engine against sovereign-grade 
     *   **Nautilus:** Score 99 (Stable / Async Rust).
 *   **[CASE STUDY: OpenBB Audit](docs/CASE_STUDY_OPENBB.md)**
     *   *Deep dive into 306 blocking call sites and reliability interdiction.*
+
+### 📄 Strategic Intelligence
+* **[WHITE PAPER: The Physics of Failure (Hydrostatic Lock)](docs/Forensic%20Audit%20-%20Agentic%20Systems.pdf)**
+  * *Federal-Grade analysis of why synchronous agents fail in high-variance environments.*
 
 ## 🛡️ Reliability Engineering Features
 
