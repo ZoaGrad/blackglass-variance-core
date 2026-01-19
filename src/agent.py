@@ -14,7 +14,10 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from google import genai
+try:
+    from google import genai
+except ImportError:
+    genai = None
 
 from src.config import settings
 from src.memory import MemoryManager
@@ -518,13 +521,96 @@ class GeminiAgent:
 
 
 if __name__ == "__main__":
-    # Allow overriding the task via CLI args or AGENT_TASK env var
+    import traceback
+    
+    # 1) Hardening: Fix sys.path to allow imports from root even if run from src/
+    # If run as `python src/agent.py`, sys.path[0] is `src`. We need `repo_root`.
+    current_dir = Path(__file__).resolve().parent
+    repo_root = current_dir.parent
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
+
+    # CLI Interception for Deterministic Control Loop
+    # We use argparse for robust flag handling in Phase 5
+    import argparse
+    
+    if len(sys.argv) > 1 and sys.argv[1] in ["watch", "simulate", "analyze"]:
+        parser = argparse.ArgumentParser(description="Blackglass Watchtower CLI")
+        subparsers = parser.add_subparsers(dest="command", required=True)
+        
+        # WATCH
+        watch_parser = subparsers.add_parser("watch", help="Run the full autonomous control loop")
+        watch_parser.add_argument("--cycles", type=int, default=5, help="Number of cycles to run")
+        watch_parser.add_argument("--interval", type=int, default=5, help="Seconds between cycles")
+        watch_parser.add_argument("--output-dir", type=str, default=None, help="Override evidence directory")
+        watch_parser.add_argument("--seed", type=int, default=None, help="Random seed for simulation")
+
+        # SIMULATE
+        sim_parser = subparsers.add_parser("simulate", help="Run metrics simulation only")
+        sim_parser.add_argument("--duration", type=int, default=30, help="Duration in seconds")
+        sim_parser.add_argument("--drift", type=float, default=None, help="Forced drift value (0.0-1.0)")
+        sim_parser.add_argument("--output-dir", type=str, default="runs/cli_simulation", help="Output directory")
+
+        # ANALYZE
+        analyze_parser = subparsers.add_parser("analyze", help="Analyze existing run directory")
+        analyze_parser.add_argument("target_dir", nargs="?", default="runs/cli_simulation", help="Directory to analyze")
+
+        args = parser.parse_args()
+        
+        try:
+            if args.command == "watch":
+                print("[CLI] Stage: WATCH (Full Control Loop)")
+                from src.tools.watch_variance import watch_variance
+                result = watch_variance(
+                    iterations=args.cycles,
+                    interval_sec=args.interval,
+                    variance_threshold=0.15,
+                    output_dir=args.output_dir
+                    # Seed support would need to be passed down if implemented in watch_variance
+                )
+                print(result)
+                sys.exit(0)
+                
+            elif args.command == "simulate":
+                print("[CLI] Stage: SIMULATE (Metrics Generation)")
+                from src.tools.blackglass_sim import run_simulation
+                res = run_simulation(
+                    run_dir=args.output_dir, 
+                    duration_sec=args.duration,
+                    drift=args.drift
+                )
+                print(json.dumps(res, indent=2))
+                if res.get("status") != "ok":
+                    sys.exit(2)
+                sys.exit(0)
+
+            elif args.command == "analyze":
+                print("[CLI] Stage: ANALYZE (Signal Processing)")
+                from src.tools.blackglass_analyze import analyze_variance
+                print(f"[CLI] Analyzing {args.target_dir}...")
+                
+                res = analyze_variance(run_dir=args.target_dir)
+                print(json.dumps(res, indent=2))
+                
+                if res.get("status") != "ok":
+                     sys.exit(2)
+                sys.exit(0)
+
+        except Exception as e:
+            print(f"\n[FATAL] Agent terminated during {args.command.upper()}: {e}")
+            traceback.print_exc()
+            sys.exit(1)
+
+    # Standard Agent Mode
     task = " ".join(sys.argv[1:]).strip() or os.environ.get(
-        "AGENT_TASK", "帮助我查看今天的天气"
+        "AGENT_TASK", "Select a task..."
     )
 
     agent = GeminiAgent()
     try:
         agent.run(task)
+    except Exception as e:
+        print(f"[FATAL] Agent Loop Crashed: {e}")
+        traceback.print_exc()
     finally:
         agent.shutdown()

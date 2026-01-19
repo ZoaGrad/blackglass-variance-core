@@ -43,8 +43,33 @@ See: **[evidence/demo_run/](evidence/demo_run/)**
 You can verify the system's logic on your own machine in 60 seconds:
 
 ```powershell
-# Run a single deterministic cycle
-venv\Scripts\python src\agent.py "Run a simulation for 60 seconds, analyze it, and write mitigation output."
+# Run a Verifiable Simulation (Metrics Only)
+python -m src.agent simulate
+
+# Run the Full Autonomous Control Loop (Simulate -> Analyze -> Mitigate)
+python -m src.agent watch
+```
+
+## 🗺️ Integration Map
+
+Watchtower is designed as a composable primitive.
+
+| Integration Point | Artifact | Role |
+| :--- | :--- | :--- |
+| **Telemetry In** | `metrics.json` | The only truth the system sees. Feed this from Prometheus/Datadog. |
+| **Decisions Out** | `cycle_summary.json` | High-level audit log. 1 row per cycle. |
+| **Actuation** | `mitigation_plan.json` | Machine-readable instructions for scaling/throttling. |
+
+## 🛠️ Advanced Usage
+
+Full control over the loop via CLI flags:
+
+```bash
+# Run 10 cycles, output to specific build folder
+python -m src.agent watch --cycles 10 --output-dir build/evidence
+
+# Simulate a specific drift scenario (0.0 - 1.0)
+python -m src.agent simulate --drift 0.8 --duration 60 --output-dir runs/test_drift
 ```
 
 ## 🛡️ Reliability Engineering Features

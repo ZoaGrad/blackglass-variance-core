@@ -56,3 +56,7 @@ report.html
 metrics.json
 analysis.json
 checkout.log
+
+# Allow curated proof-of-life artifacts
+!evidence/demo_run/
+!evidence/demo_run/**

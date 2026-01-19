@@ -14,40 +14,33 @@ def watch_variance(
     variance_threshold: float = 0.15,
     queue_threshold: int = 50,
     cooldown_cycles: int = 3,
-    duration_sec: int = 30
+    duration_sec: int = 30,
+    output_dir: str = None
 ) -> str:
-    # ... (header/pre-flight redundant chunks skipped, focus on logic) ...
-    # Wait, replace_file_content replaces contiguous blocks. I need to be careful.
-    # I will replace the function signature and the loop logic block relative to variables.
-    
-    # Actually, let's just replace the whole function to be safe given the scattered changes (signature + logic).
-    # Wait, replace_file_content cannot handle too large block if I don't need to.
-    # The signature is lines 11-18. 
-    # The logic is 127-134.
-    # The log line is 134.
-    
-    # I'll do this in chunks via multi_replace if needed, or just one Replace if they are close?
-    # They are far apart.
-    # I will use multi_replace.
-
     """
     Enters 'Continuous Mode' to act as a reliability watchtower.
     
-    Args:
-        iterations: Number of cycles to run.
-        interval_sec: Seconds to sleep between cycles.
-        variance_threshold: Drift score above which to trigger interdiction.
-        queue_threshold: Queue depth above which to trigger interdiction.
-        cooldown_cycles: Cycles to wait before re-emitting a recommendation for the same issue.
-        duration_sec: Duration of each simulation cycle in seconds.
-        
-    Returns:
-        A human-readable summary of the watch session.
+    Hardening Upgrades:
+      - Uses strict 'watchtower.analysis.v1' schema.
+      - Fails closed if analysis is invalid.
+      - Enforces Causality: signal > threshold MUST trigger mitigation.
+      - Produces cycle_summary.json for auditable proof.
     """
-    
     log_file = "watchtower.log"
     session_id = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    evidence_dir = Path("evidence") / f"watch_{session_id}"
+    
+    # Anchor paths to repo root (parent of src/)
+    repo_root = Path(__file__).resolve().parent.parent.parent
+    
+    if output_dir:
+        # User override (can be absolute or relative to repo root)
+        evidence_dir = Path(output_dir)
+        if not evidence_dir.is_absolute():
+            evidence_dir = repo_root / evidence_dir
+    else:
+        # Default: evidence/watch_<session_id>
+        evidence_dir = repo_root / "evidence" / f"watch_{session_id}"
+        
     evidence_dir.mkdir(parents=True, exist_ok=True)
     
     print(f"[WATCH] Starting Watchtower Session {session_id}")
@@ -57,201 +50,201 @@ def watch_variance(
     last_interdiction_cycle = -999
     last_interdiction_status = None
     
+    # Init Log
     with open(log_file, "a") as f:
         f.write(f"--- Session {session_id} Start ---\n")
     
-    # Pre-flight Hygiene Check: Encoding
-    try:
-        bg_path = os.getenv("BLACKGLASS_REPO_PATH")
-        if bg_path:
-            init_file = Path(bg_path) / "blackglass" / "__init__.py"
-            if init_file.exists():
-                with open(init_file, "r", encoding="utf-8") as f:
-                    f.read() # Just try to read it
-                print("[WATCH] Pre-flight check: blackglass/__init__.py is UTF-8 clean.")
-    except Exception as e:
-        msg = f"[WATCH] CRITICAL: blackglass/__init__.py encoding error: {e}"
-        print(msg)
-        return msg
+    # Pre-flight Checklist
+    if not os.getenv("BLACKGLASS_REPO_PATH"):
+         return "[WATCH] FATAL: BLACKGLASS_REPO_PATH not set."
 
     # Lock File Mechanism
     lock_file = Path(".watchtower.lock")
     if lock_file.exists():
-        # Check for stale lock (older than 300 seconds / 5 mins)
         try:
             mtime = lock_file.stat().st_mtime
             age = time.time() - mtime
             if age > 300:
-                print(f"[WATCH] Found stale lock file ({age:.0f}s old). Removing it.")
+                print(f"[WATCH] Clearing stale lock ({age:.0f}s old).")
                 lock_file.unlink()
             else:
-                msg = f"[WATCH] FATAL: .watchtower.lock exists and is active ({age:.0f}s old). Another instance is running."
-                print(msg)
-                return msg
+                return f"[WATCH] FATAL: Lock active ({age:.0f}s old)."
         except Exception as e:
-            # If we can't stat/unlink, it might be truly locked by OS or permission issue
-            msg = f"[WATCH] FATAL: Could not verified lock file state: {e}"
-            print(msg)
-            return msg
+            return f"[WATCH] FATAL: Lock check failed: {e}"
     
     try:
         lock_file.touch()
         print(f"[WATCH] Lock acquired: {lock_file}")
 
         for i in range(iterations):
+            cycle_idx = i + 1
+            cycle_dir = evidence_dir / f"cycle_{cycle_idx}"
+            
             # Kill switch
             if os.path.exists(".stop"):
-                msg = "[WATCH] .stop file detected. Halted."
-                print(msg)
-                return msg
+                return "[WATCH] Halted by .stop file."
             
-            # Log Rotation (10MB Limit)
-            log_path = Path(log_file)
-            if log_path.exists() and log_path.stat().st_size > 10 * 1024 * 1024:
-                rotate_ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                rotate_name = f"watchtower_{rotate_ts}.log"
-                log_path.rename(rotate_name)
-                print(f"[WATCH] Log rotated to {rotate_name}")
-                # Re-create header
-                with open(log_file, "w") as f:
-                     f.write(f"--- Log Rotated: {rotate_ts} ---\n")
+            # Log Rotation
+            if Path(log_file).exists() and Path(log_file).stat().st_size > 10 * 1024 * 1024:
+                Path(log_file).rename(f"watchtower_{session_id}.log")
+                with open(log_file, "w") as f: f.write("--- Log Rotated ---\n")
 
             timestamp_iso = datetime.datetime.now().isoformat()
-            cycle_dir = str(evidence_dir / f"cycle_{i+1}")
-            print(f"[WATCH] Cycle {i+1}/{iterations}...")
+            cycle_dir = evidence_dir / f"cycle_{cycle_idx}"
+            cycle_dir.mkdir(parents=True, exist_ok=True) # Ensure dir exists before any possibility of crash
+
+            print(f"[WATCH] Cycle {cycle_idx}/{iterations}...")
             
             # Runtime Heartbeat
-            runtime_status = {
-                "start_time": session_id,
-                "last_cycle_time": timestamp_iso,
-                "current_cycle": i + 1,
-                "status": "RUNNING"
-            }
             with open("watchtower_runtime.json", "w") as f:
-                json.dump(runtime_status, f)
+                json.dump({
+                    "session": session_id,
+                    "cycle": cycle_idx,
+                    "last_active": timestamp_iso,
+                    "status": "RUNNING"
+                }, f)
             
-            # 1. Collect Artifacts (Simulate)
-            print(f"    -> Running Simulation (Duration={duration_sec}s)...")
-            sim_result = run_simulation(run_dir=cycle_dir, duration_sec=duration_sec)
+            summary_written = False
+            decision = "UNKNOWN"
             
-            if sim_result.get("status") != "ok":
-                print(f"[ERROR] Simulation failed: {sim_result.get('message') or sim_result.get('stderr')}")
-                continue
+            try:
+                # 1. Collect (Simulate)
+                # Note: analyze_variance checks for sim engine and uses it if present,
+                # or falls back to mock generator if needed.
+                # We do not call run_simulation explicitly here because analyze_variance determines
+                # the source of truth (sim vs mock).
+                
+                # 2. Analyze (Strict Schema)
+                print("    -> Analyzing Variance...")
+                try:
+                    analysis = analyze_variance(run_dir=str(cycle_dir), duration_sec=duration_sec)
+                except Exception as e:
+                    print(f"[ERROR] Logic Crash: {e}")
+                    analysis = {"status": "crash", "message": str(e)}
 
-            # 2. Analyze Variance
-            print("    -> Analyzing Variance...")
-            # Note: analyze_variance generates its own machine artifacts if missing, 
-            # so we pass the same run_dir and duration.
-            analysis_result = analyze_variance(run_dir=cycle_dir, duration_sec=duration_sec)
-            
-            if analysis_result.get("status") != "ok":
-                 print(f"[ERROR] Analysis failed: {analysis_result.get('message') or analysis_result.get('stderr')}")
-                 continue
-                 
-            # Extract metrics from whatever form the analysis returned
-            # Logic here depends on what analyze_variance returns in "engine" mode vs "fallback"
-            # Since we patched analyze_variance to return a dict, let's parse it.
-            
-            # The prompt for blackglass_analyze patch suggests it currently returns dict with 'status', 'mode', 'artifacts', 'engine_output' (or 'summary' in fallback).
-            # We need to extract structured data.
-            # If engine ran, 'engine_output' is text. We might need to parse it or trust 'summary' from fallback?
-            # Actually, in hybrid mode, 'analyze_variance' runs python generator then engine.
-            # The python generator creates metrics.json.
-            # Let's peek at metrics.json directly if engine output isn't structured enough, 
-            # OR rely on the tool to give us structured data if we updated it to do so.
-            # The current 'analyze_variance' patch returns 'engine_output' (string) or 'summary' (dict in fallback).
-            # To be robust, let's re-read metrics.json ourselves here if needed, or rely on 'summary' if present.
-            
-            drift = 0.0
-            queue_depth = 0
-            
-            if "summary" in analysis_result:
-                 summary = analysis_result["summary"]
-                 drift = 0.0 # Standard fallback doesn't calculate drift score, maybe assume low? 
-                 # Actually simulate.exe prints drift score. We could parse sim_result['stdout'].
-                 queue_depth = summary.get("max_queue_depth", 0)
-            else:
-                 # Try to parse engine output or run simple metrics check?
-                 # For now, let's load metrics.json directly to be safe, like the fallback does.
-                 metrics_path = Path(cycle_dir) / "metrics.json"
-                 if metrics_path.exists():
-                     try:
-                         with open(metrics_path, "r", encoding="utf-8") as f:
-                             metrics = json.load(f)
-                         queue_depth = max((m.get("queue_depth", 0) for m in metrics), default=0)
-                         # Drift score is usually an aggregate. Let's assume 0 if not explicit.
-                     except Exception as e:
-                         print(f"[WARN] Failed to read metrics: {e}")
-            
-            # 3. Evaluate Thresholds
-            # Explicit Type Safety
-            interdict_drift = float(drift) > float(variance_threshold)
-            interdict_queue = int(queue_depth) > int(queue_threshold)
-            
-            status = "OK"
-            if interdict_queue:
-                status = "INTERDICT_QUEUE"
-            elif interdict_drift:
-                status = "INTERDICT_DRIFT"
+                # 3. Fail Closed / Schema Validation
+                is_valid = (
+                    analysis.get("status") == "ok" and 
+                    "variance_detected" in analysis
+                )
                 
-            log_entry = f"[{timestamp_iso}] Cycle={i+1} Status={status} Drift={drift:.4f}(>{variance_threshold}) Queue={queue_depth}(>{queue_threshold})"
-            
-            # Update heartbeat with status
-            runtime_status["last_status"] = status
-            with open("watchtower_runtime.json", "w") as f:
-                json.dump(runtime_status, f)
+                if not is_valid:
+                    # FAIL CLOSED: Do not guess. Do not mitigate.
+                    error_msg = f"Analysis Failed: {analysis.get('message', 'Unknown Schema Error')}"
+                    print(f"[ERROR] {error_msg}")
+                    with open(log_file, "a") as f: f.write(f"[{timestamp_iso}] Cycle={cycle_idx} ERROR {error_msg}\n")
+                    
+                    decision = "ERROR"
+                    # Write Summary immediately
+                    with open(cycle_dir / "cycle_summary.json", "w") as f:
+                        json.dump({
+                            "cycle": cycle_idx,
+                            "decision": "ERROR",
+                            "reason": error_msg,
+                            "input_error": analysis
+                        }, f, indent=2)
+                    summary_written = True
+                    continue # Skip to next cycle
 
-            # 4. Durable Logging
-            with open(log_file, "a") as f:
-                f.write(log_entry + "\n")
+                # 4. Extract Signals (Typed)
+                drift = float(analysis["variance_detected"])
+                queue_depth = int(analysis["queue_depth"])
                 
-            if status != "OK":
-                # Debounce Logic
-                is_repeat = (status == last_interdiction_status) and \
-                            ((i + 1) - last_interdiction_cycle <= cooldown_cycles)
+                # Write Analysis Artifact
+                with open(cycle_dir / "analysis.json", "w") as f:
+                    json.dump(analysis, f, indent=2)
+
+                # 5. Evaluate & Assert Causality
+                breach_drift = drift > variance_threshold
+                breach_queue = queue_depth > queue_threshold
+                should_interdict = breach_drift or breach_queue
                 
-                if is_repeat:
-                    msg = f"    -> REPEAT DETECTED (Cooldown Active - Cycle {last_interdiction_cycle})"
-                    with open(log_file, "a") as f:
-                        f.write(msg + "\n")
-                    print(f"[WARN] {status} PERSISTS (Debounced)")
+                decision = "NOOP"
+                mitigation_plan = {}
+                status_tag = "OK"
+
+                if should_interdict:
+                    status_tag = "INTERDICT_DRIFT" if breach_drift else "INTERDICT_QUEUE"
+                    decision = "MITIGATE"
                     
-                else:
-                    print(f"[WARN] {status} DETECTED! (Drift={drift}, Queue={queue_depth})")
+                    # Debounce
+                    is_repeat = (status_tag == last_interdiction_status) and \
+                                (cycle_idx - last_interdiction_cycle <= cooldown_cycles)
                     
-                    # Generate Mitigation Plan
-                    # We need to adapt recommend_mitigation to take the analysis result
-                    # For now let's pass the whole dict
-                    plan = recommend_mitigation(analysis_result) 
-                    if plan:
-                        # Save full plan
-                        plan_file = evidence_dir / f"mitigation_cycle_{i+1}.json"
-                        with open(plan_file, "w") as pf:
-                            json.dump(plan, pf, indent=2)
+                    if is_repeat:
+                        decision = "SKIPPED_DEBOUNCE"
+                        print(f"    -> [DEBOUNCE] {status_tag} persists (Cycle {last_interdiction_cycle})")
+                    else:
+                        print(f"    -> [DETECTED] {status_tag} (Drift={drift:.4f}, Queue={queue_depth})")
+                        last_interdiction_cycle = cycle_idx
+                        last_interdiction_status = status_tag
                         
-                        # Log summary line
-                        top_action = plan.get("recommended_actions", [{}])[0].get("action", "investigate")
-                        rec_log = f"    -> RECOMMENDED: {top_action}"
-                        with open(log_file, "a") as f:
-                            f.write(rec_log + "\n")
-                        print(rec_log)
-                    
-                    last_interdiction_cycle = i + 1
-                    last_interdiction_status = status
-    
-                interdictions.append(log_entry)
-            else:
-                print(f"    -> OK (Drift={drift}, Queue={queue_depth})")
-            
-            time.sleep(interval_sec)
-            
-        summary = f"Watchtower complete. {iterations} cycles. {len(interdictions)} interdictions."
-        if interdictions:
-            summary += "\nFindings:\n" + "\n".join(interdictions)
-            
-        return summary
+                        # Generate Mitigation
+                        mitigation_plan = recommend_mitigation(analysis)
+                        
+                        # CAUSALITY ASSERTION:
+                        # If we decided to mitigate, the plan MUST NOT be empty.
+                        if not mitigation_plan:
+                             crasher = f"VIOLATION: Thresholds breached but recommend_mitigation returned empty plan! Inputs: d={drift}, q={queue_depth}"
+                             print(f"[FATAL] {crasher}")
+                             raise RuntimeError(crasher)
+
+                        # Persist Plan
+                        with open(cycle_dir / "mitigation_plan.json", "w") as f:
+                            json.dump(mitigation_plan, f, indent=2)
+                            
+                        interdictions.append(f"Cycle {cycle_idx}: {status_tag}")
+
+                else:
+                     print(f"    -> OK (Drift={drift:.4f}, Queue={queue_depth})")
+
+                # 6. Cycle Summary (The Truth)
+                summary = {
+                    "cycle": cycle_idx,
+                    "timestamp": timestamp_iso,
+                    "decision": decision,
+                    "signals": {
+                        "variance_detected": drift,
+                        "queue_depth": queue_depth
+                    },
+                    "thresholds": {
+                        "variance": variance_threshold,
+                        "queue": queue_threshold
+                    },
+                    "artifacts": {
+                        "analysis": "analysis.json",
+                        "mitigation": "mitigation_plan.json" if decision == "MITIGATE" else None
+                    }
+                }
+                with open(cycle_dir / "cycle_summary.json", "w") as f:
+                    json.dump(summary, f, indent=2)
+                summary_written = True
+
+                # Log Line
+                log_line = f"[{timestamp_iso}] Cycle={cycle_idx} Status={status_tag} Decision={decision} Drift={drift:.4f} Queue={queue_depth}"
+                with open(log_file, "a") as f: f.write(log_line + "\n")
+                
+                time.sleep(interval_sec)
+
+            except Exception as e:
+                # CATASTROPHIC FAILURE TRAP
+                print(f"[FATAL] Cycle {cycle_idx} crashed: {e}")
+                import traceback
+                traceback.print_exc()
+                
+                if not summary_written:
+                    with open(cycle_dir / "cycle_summary.json", "w") as f:
+                        json.dump({
+                            "cycle": cycle_idx,
+                            "decision": "CRASH",
+                            "reason": str(e),
+                            "traceback": traceback.format_exc()
+                        }, f, indent=2)
+                continue # Try next cycle
+
+        return f"Watchtower session complete. {len(interdictions)} interdictions."
         
     finally:
         if lock_file.exists():
             lock_file.unlink()
-            print(f"[WATCH] Lock released: {lock_file}")
+
