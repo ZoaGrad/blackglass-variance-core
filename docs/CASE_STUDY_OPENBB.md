@@ -7,19 +7,19 @@
 ## 1. EXECUTIVE SUMMARY
 The Blackglass Variance Core performed a thermodynamic profile of the OpenBB codebase to assess reliability under entropy. While the codebase is syntactically robust (clean error handling), it exhibits **Critical Thermodynamic Fragility** due to excessive synchronous coupling.
 
-**VARIANCE SCORE: 1544 (HIGH RISK)**
+**VARIANCE SCORE: 1602 (HIGH RISK)**
 
 ## 2. RISK TOPOLOGY
 The audit identified three primary vectors of instability:
 
 | RISK VECTOR | DENSITY (HITS) | IMPLICATION |
 | :--- | :--- | :--- |
-| **Blocking coupling** | **304** | Critical reliance on synchronous `requests.get`. No circuit breakers detected. |
+| **Blocking coupling** | **306** | Critical reliance on synchronous `requests.get`. No circuit breakers detected. |
 | **Cognitive Surface** | **1** | Direct OpenAI integration without deterministic guardrails. |
 | **Technical Debt** | **19** | Explicit `TODO` / `FIXME` markers in critical paths. |
 
 ## 3. FORENSIC ANALYSIS: THE "LATENCY CASCADE"
-The scan identified **304 synchronous HTTP calls**. In a financial agent context, this creates a "Chain of Fate":
+The scan identified **306 synchronous HTTP calls**. In a financial agent context, this creates a "Chain of Fate":
 * If *Target API A* (e.g., a stock ticker) hangs for 10 seconds...
 * The OpenBB Worker Thread hangs for 10 seconds.
 * The Agent Queue backlogs.
@@ -31,7 +31,7 @@ The scan identified **304 synchronous HTTP calls**. In a financial agent context
 
 ## 4. BLACKGLASS INTERDICTION STRATEGY
 To stabilize this architecture, the **Blackglass Watchtower** would be deployed to:
-1.  **Wrap** the 304 blocking calls in a `CircuitBreaker` pattern.
+1.  **Wrap** the 306 blocking calls in a `CircuitBreaker` pattern.
 2.  **Monitor** the "Queue Depth" (Leading Indicator) rather than the "Timeout" (Lagging Indicator).
 3.  **Interdict** traffic when Variance Score > 500, preserving core system availability.
 
