@@ -44,7 +44,7 @@ def main():
         except Exception as e:
             print(Fore.RED + Style.BRIGHT + f"Error: {e}")
 
-        time.sleep(10)  # Accelerated for testing
+        time.sleep(45)  # Accelerated for testing
 
 if __name__ == "__main__":
     main()

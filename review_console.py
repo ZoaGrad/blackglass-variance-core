@@ -57,20 +57,61 @@ def read_proposal(prop_id):
     except Exception as e:
         print(Fore.RED + f"!! ERROR READING PROPOSAL: {e}")
 
+import datetime
+
+def approve_proposal(prop_id):
+    # Allow user to pass just the uuid part or full name
+    if not prop_id.startswith("prop-"):
+        prop_id = f"prop-{prop_id}"
+    if not prop_id.endswith(".json"):
+        prop_id = f"{prop_id}.json"
+        
+    fpath = os.path.join(EVIDENCE_VAULT, prop_id)
+    
+    if not os.path.exists(fpath):
+        print(Fore.RED + f"!! PROPOSAL NOT FOUND: {prop_id}")
+        return
+        
+    try:
+        with open(fpath, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            
+        if data.get("status") == "APPROVED":
+            print(Fore.YELLOW + f">> PROPOSAL ALREADY APPROVED: {prop_id}")
+            return
+            
+        data["status"] = "APPROVED"
+        data["approved_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        data["approver"] = "SOVEREIGN_ARCHITECT"
+        
+        with open(fpath, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+            
+        print(Fore.GREEN + f">> ROYAL ASSENT GRANTED: {prop_id}")
+        print(Fore.GREEN + f"   Status: APPROVED | Timestamp: {data['approved_at']}")
+        
+    except Exception as e:
+        print(Fore.RED + f"!! ERROR APPROVING PROPOSAL: {e}")
+
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python review_console.py [list | read <id>]")
+        print("Usage: python review_console.py [list | read <id> | approve <id>]")
         return
 
     command = sys.argv[1].lower()
     
     if command == "list":
         list_proposals()
-    elif command == "read":
+    elif command in ["read", "show"]:
         if len(sys.argv) < 3:
-            print("Usage: python review_console.py read <proposal_id>")
+            print(f"Usage: python review_console.py {command} <proposal_id>")
         else:
             read_proposal(sys.argv[2])
+    elif command == "approve":
+        if len(sys.argv) < 3:
+            print("Usage: python review_console.py approve <proposal_id>")
+        else:
+            approve_proposal(sys.argv[2])
     else:
         print(f"Unknown command: {command}")
 
