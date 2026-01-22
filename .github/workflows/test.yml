@@ -24,5 +24,7 @@ jobs:
         pip install -r requirements.txt
         
     - name: Run Tests
+      env:
+        BLACKGLASS_REPO_PATH: ${{ github.workspace }}
       run: |
         pytest tests/
