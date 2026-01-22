@@ -5,6 +5,8 @@ from mcp.server.fastmcp import FastMCP
 import os
 import json
 import httpx
+import uuid
+import datetime
 from dotenv import load_dotenv
 from supabase import create_client, Client
 
@@ -15,6 +17,9 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") # Must be Service Role to invoke functions/heal
 WEST_NODE_URL = os.getenv("WEST_NODE_URL")
 
+# Path to Evidence Vault
+EVIDENCE_VAULT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../evidence/proposals"))
+
 if not SUPABASE_URL or not SUPABASE_KEY:
     raise ValueError("CRITICAL: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set.")
 
@@ -23,6 +28,9 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Initialize MCP Server (The Projection)
 mcp = FastMCP("Blackglass-Variance-Core")
+
+# Ensure Vault Exists
+os.makedirs(EVIDENCE_VAULT, exist_ok=True)
 
 # --- 2. TOOLS ---
 
@@ -100,6 +108,41 @@ async def invoke_regulation(mode: str = "AUTO") -> str:
             return f"REGULATION FAILED: HTTP {response.status_code} - {response.text}"
     except Exception as e:
         return f"ERROR INVOKING HEALER: {str(e)}"
+
+@mcp.tool()
+def propose_directive(type: str, content: str, justification: str, urgency: str = "NORMAL") -> str:
+    """
+    PROPOSE a new Directive to the System (The Ballot Box).
+    Stores the proposal in the Evidence Vault for review.
+    type: "MANIFEST_UPDATE", "CONSTITUTIONAL_AMENDMENT", "PARAMETER_TUNE"
+    """
+    ALLOWED_TYPES = ["MANIFEST_UPDATE", "CONSTITUTIONAL_AMENDMENT", "PARAMETER_TUNE"]
+    
+    if type not in ALLOWED_TYPES:
+        return f"REJECTED: Invalid directive type. Allowed: {ALLOWED_TYPES}"
+        
+    prop_id = f"prop-{uuid.uuid4()}"
+    timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    
+    proposal = {
+        "id": prop_id,
+        "timestamp": timestamp,
+        "status": "PROPOSED",
+        "author": "EXTERNAL_AGENT",
+        "type": type,
+        "content": content,
+        "justification": justification,
+        "urgency": urgency
+    }
+    
+    filepath = os.path.join(EVIDENCE_VAULT, f"{prop_id}.json")
+    
+    try:
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(proposal, f, indent=2)
+        return json.dumps({ "proposal_id": prop_id, "status": "QUEUED_FOR_REVIEW" })
+    except Exception as e:
+        return f"ERROR WRITING PROPOSAL: {str(e)}"
 
 if __name__ == "__main__":
     mcp.run()
