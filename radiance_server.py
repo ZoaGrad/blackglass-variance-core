@@ -48,8 +48,8 @@ def get_compliance_seal() -> str:
     """
     VERIFY the cryptographic proof of the System's state (The Truth's Seal).
     Reads the local compliance_certificate.json from the South Node.
+    Standard 1.1 enforcement.
     """
-    # Path to South Node artifact
     cert_path = os.path.join(os.path.dirname(__file__), "../coherence-sre/compliance_certificate.json")
     
     try:
@@ -58,6 +58,13 @@ def get_compliance_seal() -> str:
             
         with open(cert_path, "r") as f:
             cert = json.load(f)
+        
+        # Standard 1.1 Verification
+        status = cert.get("compliance_status")
+        is_valid = (status == "PASSED")
+        
+        # Enrich with meta-verification
+        cert["_meta_verification"] = "VALID" if is_valid else "INVALID"
         
         return json.dumps(cert, indent=2)
     except Exception as e:
