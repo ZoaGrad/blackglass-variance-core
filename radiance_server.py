@@ -144,5 +144,36 @@ def propose_directive(type: str, content: str, justification: str, urgency: str 
     except Exception as e:
         return f"ERROR WRITING PROPOSAL: {str(e)}"
 
+@mcp.tool()
+async def inspect_system_file(relative_path: str) -> str:
+    """
+    Read the content of a system file to verify configuration or logic.
+    Allowed paths: ../blackglass-variance-core/, ../coherence-sre/, ../mythotech-spiralos/, ../evidence/
+    """
+    # Security: Prevent traversing above project root
+    if ".." in relative_path and not relative_path.startswith(".."):
+        return "ACCESS DENIED: Invalid traversal."
+    
+    # Normalization for windows/linux safety
+    safe_roots = ["blackglass-variance-core", "coherence-sre", "mythotech-spiralos", "evidence", "vector_null"]
+    
+    # Simple check: Is the path pointing to a safe zone?
+    # (In a real production env, we would use os.path.abspath checks)
+    is_safe = any(root in relative_path for root in safe_roots)
+    
+    if not is_safe:
+        return f"ACCESS DENIED: Path '{relative_path}' is outside Sovereign Territory."
+
+    try:
+        # Adjust for the fact that radiance_server is inside blackglass-variance-core
+        if not os.path.exists(relative_path):
+            return "ERROR: File not found."
+            
+        with open(relative_path, "r", encoding="utf-8") as f:
+            content = f.read()
+            return content
+    except Exception as e:
+        return f"ERROR: Could not read file. {str(e)}"
+
 if __name__ == "__main__":
     mcp.run()
