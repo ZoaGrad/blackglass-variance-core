@@ -4,6 +4,7 @@ pydantic-settings
 python-dotenv
 pytest
 requests
+supabase
 
 # MCP (Model Context Protocol) Integration
 # Install with: pip install 'mcp[cli]'
