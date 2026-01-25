@@ -1,0 +1,62 @@
+{
+    "system_status": "STANDBY",
+    "version": "2.0.0",
+    "risk_global_stop_loss": 0.05,
+    "clones": [
+        {
+            "id": "ETH_BASELINE_PRIME",
+            "strategy_type": "AGGRESSIVE",
+            "target_symbol": "ETH",
+            "cex_symbol": "ETHUSD",
+            "base_address": "0x4200000000000000000000000000000000000006",
+            "pair_address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bDA02913",
+            "threshold": 0.005,
+            "risk_profile": "medium",
+            "position_cap_usd": 1500,
+            "entry_trigger": "order_imbalance",
+            "exit_trigger": "trailing_profit",
+            "trailing_profit_percent": 0.005,
+            "enabled": true
+        },
+        {
+            "id": "AERO_SCALPER_PRIME",
+            "strategy_type": "AGGRESSIVE",
+            "target_symbol": "AERO",
+            "cex_symbol": "AEROUSDT",
+            "base_address": "0x940181a94a35A4569E4529A3CDfB74e38FD98631",
+            "pair_address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bDA02913",
+            "threshold": 0.01,
+            "risk_profile": "high",
+            "position_cap_usd": 1000,
+            "entry_trigger": "order_imbalance",
+            "exit_trigger": "trailing_profit",
+            "trailing_profit_percent": 0.005,
+            "enabled": true
+        },
+        {
+            "id": "BRETT_MOMENTUM_PRIME",
+            "strategy_type": "MOMENTUM",
+            "target_symbol": "BRETT",
+            "cex_symbol": "BRETTUSDT",
+            "base_address": "0x532f27101965dd16442e59d40670faf5ebb142e4",
+            "pair_address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bDA02913",
+            "threshold": 0.02,
+            "risk_profile": "medium",
+            "position_cap_usd": 500,
+            "entry_trigger": "volume_spike",
+            "exit_trigger": "rsi_divergence",
+            "volume_spike_multiplier": 3.0,
+            "enabled": true
+        }
+    ],
+    "execution_settings": {
+        "max_gas_price_gwei": 0.5,
+        "min_roi_percent": 0.5,
+        "max_slippage_percent": 1.0,
+        "concurrency_enabled": true
+    },
+    "rpc_endpoints": {
+        "base_mainnet": "https://mainnet.base.org",
+        "fallback": "https://base.llamarpc.com"
+    }
+}

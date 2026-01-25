@@ -1,0 +1,61 @@
+    async def scan_all(self, w3):
+        """
+        OMNI-HUNTER: Cycles through the Hit List and checks for opportunities.
+        Returns a list of all detected arbitrage signals.
+        """
+        results = []
+        
+        for symbol, data in self.targets.items():
+            try:
+                print(f"[OMNI-HUNTER] :: Scanning {symbol}...")
+                
+                # 1. Fetch CEX Price for this symbol
+                cex_price = await self.get_cex_price(data['cex_symbol'])
+                if cex_price == 0:
+                    continue
+                
+                # 2. Fetch Chain Price
+                chain_price = self.get_on_chain_price(
+                    w3, 
+                    token_in=data['base_address'], 
+                    token_out=data['pair_address']
+                )
+                if chain_price == 0:
+                    continue
+                
+                # 3. Calculate Deviation with token-specific threshold
+                delta = (cex_price - chain_price) / chain_price
+                threshold = data['threshold']
+                
+                # 4. Log the Pulse
+                print(f"[HUNTER:{symbol}] :: CEX: ${cex_price:.2f} | CHAIN: ${chain_price:.2f} | DELTA: {delta*100:.3f}% | THRESHOLD: {threshold*100:.1f}%")
+                
+                # 5. Check Trigger
+                if delta < -threshold:
+                    results.append({
+                        "symbol": symbol,
+                        "signal": "SHORT",
+                        "confidence": abs(delta) * 100,
+                        "reason": "CEX_CRASH_DETECTED",
+                        "cex_price": cex_price,
+                        "chain_price": chain_price,
+                        "base_address": data['base_address'],
+                        "pair_address": data['pair_address']
+                    })
+                elif delta > threshold:
+                    results.append({
+                        "symbol": symbol,
+                        "signal": "LONG",
+                        "confidence": abs(delta) * 100,
+                        "reason": "CEX_PUMP_DETECTED",
+                        "cex_price": cex_price,
+                        "chain_price": chain_price,
+                        "base_address": data['base_address'],
+                        "pair_address": data['pair_address']
+                    })
+                    
+            except Exception as e:
+                print(f"[OMNI-HUNTER] :: ERROR scanning {symbol}: {e}")
+                continue
+        
+        return results if results else None

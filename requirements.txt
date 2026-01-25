@@ -7,3 +7,4 @@ mcp
 supabase
 httpx
 colorama
+pyyaml
