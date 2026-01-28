@@ -1,0 +1,10 @@
+google-genai
+pydantic
+python-dotenv
+pytest
+requests
+mcp
+supabase
+httpx
+colorama
+pyyaml
