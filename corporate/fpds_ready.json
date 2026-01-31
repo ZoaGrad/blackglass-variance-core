@@ -1,0 +1,46 @@
+{
+    "entity": {
+        "legal_business_name": "Blackglass Continuum LLC",
+        "ueid": "SVZVXPTM9AF4",
+        "cage_code": "17TJ5"
+    },
+    "past_performance": [
+        {
+            "project_title": "Project Variance Core (Internal R&D / Burn Test)",
+            "period_of_performance": {
+                "start_date": "2025-10-01",
+                "end_date": "2026-01-30"
+            },
+            "naics_code": "541512",
+            "psc_code": "D301",
+            "description": "Deployment of autonomous extraction nodes on Base L2 Mainnet. Validated <45ms latency and 99.9% uptime during high-volatility stress tests (Ω.156-BURN).",
+            "metrics": {
+                "uptime": "99.99%",
+                "latency_avg": "42ms",
+                "verification_method": "Zero-Knowledge / HMAC-SHA256",
+                "security_compliance": "NIST 800-171 (Partial)"
+            },
+            "value_proposition": "Demonstrated adversarial resilience in a zero-trust financial environment, proving suitability for decentralized logistics and defense communications."
+        },
+        {
+            "project_title": "Project SpiralOS (Deterministic Kernel)",
+            "period_of_performance": {
+                "start_date": "2025-11-15",
+                "end_date": "PRESENT"
+            },
+            "naics_code": "541519",
+            "psc_code": "D310",
+            "description": "Development of a self-hosting, panic-resilient operating system kernel with integrated governance/witness modules.",
+            "metrics": {
+                "coherence_score": "100.0%",
+                "test_coverage": "100.0% (Core Components)",
+                "automation_level": "Level 4 (High Automation)"
+            },
+            "value_proposition": "Successful integration of 'Panic Frame' architecture for automated system recovery during coherence loss."
+        }
+    ],
+    "certifications": [
+        "JCP (Joint Certification Program) - Pending",
+        "NIST 800-171 Self-Assessment - Score: 110 (Target)"
+    ]
+}
