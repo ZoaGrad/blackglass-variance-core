@@ -56,7 +56,72 @@ report.html
 metrics.json
 analysis.json
 checkout.log
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+env/
+ENV/
+.env
+.venv
+env.bak/
+venv.bak/
+
+# Antigravity / IDE
+
+.idea/
+.vscode/
+*.swp
+
+# Project specific
+logs/
+data/
+.opencode/
+
+# Runtime / Agent State
+watchtower.log
+watchtower_runtime.json
+.watchtower.lock
+agent_memory.json
+*.log
+
+# Runs / Evidence Exhaust
+runs/
+evidence/
+report.html
+metrics.json
+analysis.json
+checkout.log
 
 # Allow curated proof-of-life artifacts
 !evidence/demo_run/
 !evidence/demo_run/**
+
+# Environment secrets
+.env
+
+# Operation: Noise Filter
+chaos_test_*.py
+*_debug.log

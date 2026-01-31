@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Blackglass Continuum LLC - NIST 800-171 SSP</title>
+    <style>
+        @page {
+            size: letter;
+            margin: 1in;
+
+            @bottom-right {
+                content: "Page " counter(page) " of " counter(pages);
+            }
+        }
+
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            color: #000;
+            max-width: 8.5in;
+            margin: 0 auto;
+            padding: 2em;
+        }
+
+        h1 {
+            font-size: 16pt;
+            text-transform: uppercase;
+            margin-bottom: 0.5em;
+        }
+
+        h2 {
+            font-size: 14pt;
+            border-bottom: 1px solid #000;
+            padding-bottom: 0.5em;
+            margin-top: 1.5em;
+        }
+
+        h3 {
+            font-size: 12pt;
+            font-weight: bold;
+            margin-top: 1.5em;
+        }
+
+        .title-block {
+            text-align: center;
+            margin-bottom: 3em;
+            border-bottom: 2px solid #000;
+            padding-bottom: 2em;
+        }
+
+        .control-group {
+            margin-bottom: 1em;
+        }
+
+        .footer {
+            font-size: 10pt;
+            text-align: center;
+            margin-top: 3em;
+            border-top: 1px solid #ccc;
+            padding-top: 1em;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="title-block">
+        <h1>SYSTEM SECURITY PLAN (SSP)</h1>
+        <h2>NIST Special Publication 800-171 Rev. 2</h2>
+        <h3>Blackglass Continuum LLC – Variance Core Trading Infrastructure</h3>
+        <br>
+        <p>
+            <strong>System Name:</strong> Variance Core Mirror Node<br>
+            <strong>System Category:</strong> Specialized Computing Platform<br>
+            <strong>CAGE Code:</strong> 17TJ5<br>
+            <strong>Date:</strong> January 2026<br>
+            <strong>Version:</strong> 1.0-DRAFT
+        </p>
+    </div>
+
+    <h2>1. SYSTEM BOUNDARY</h2>
+    <p>The system comprises automated trading and risk management infrastructure operating on Base Layer 2 blockchain
+        mainnet. The environment includes:</p>
+    <ul>
+        <li>Primary extraction nodes (simulation/live modes)</li>
+        <li>Evidence vault (cryptographic log storage)</li>
+        <li>Judicial quorum consensus mechanisms</li>
+        <li>Automated hibernation/circuit-breaker subsystems</li>
+    </ul>
+    <p><strong>Security Categorization:</strong> Low Confidentiality, Low Integrity, Low Availability (per FIPS 199)</p>
+
+    <h2>2. CONTROL IMPLEMENTATION</h2>
+
+    <h3>Access Control (AC)</h3>
+    <div class="control-group">
+        <strong>AC-2:</strong> Role-based access enforced via asymmetric key cryptography<br>
+        <strong>AC-3:</strong> Zero-trust enforcement; all executions require multi-sig simulation validation<br>
+        <strong>AC-17:</strong> Remote access limited to encrypted SSH via hardware-key authentication
+    </div>
+
+    <h3>Audit and Accountability (AU)</h3>
+    <div class="control-group">
+        <strong>AU-3:</strong> Content of audit records includes: timestamp (nanosecond), substrate state, trade
+        parameters, simulation results, cryptographic signatures<br>
+        <strong>AU-6:</strong> Automated audit review via <code>verify_vault_integrity.py</code>; detects anomalies in
+        evidence chain<br>
+        <strong>AU-12:</strong> Audit generation for all extraction attempts (successful, failed, inhibited)
+    </div>
+
+    <h3>Configuration Management (CM)</h3>
+    <div class="control-group">
+        <strong>CM-2:</strong> Baseline configuration: ARMED=False (simulation mode) for all non-production nodes<br>
+        <strong>CM-6:</strong> Standardized configuration via Infrastructure-as-Code (Docker/Terraform)<br>
+        <strong>CM-8:</strong> Hardware asset inventory maintained; software bill of materials (SBOM) generated for
+        Python dependencies
+    </div>
+
+    <h3>Identification and Authentication (IA)</h3>
+    <div class="control-group">
+        <strong>IA-2:</strong> PKI-based authentication for all administrative functions<br>
+        <strong>IA-5:</strong> Cryptographically protected passwords/API keys; rotated every 90 days
+    </div>
+
+    <h3>Incident Response (IR)</h3>
+    <div class="control-group">
+        <strong>IR-4:</strong> Automated incident handling via Ω.156-BURN protocol (91-second hibernation trigger)<br>
+        <strong>IR-7:</strong> Incident response assistance available through Coleman Willis (SRE lead)
+    </div>
+
+    <h3>Maintenance (MA)</h3>
+    <div class="control-group">
+        <strong>MA-4:</strong> Non-local maintenance restricted to GFE (Government Furnished Equipment) protocols once
+        under contract<br>
+        <strong>MA-5:</strong> Maintenance personnel limited to US persons (pending contract award)
+    </div>
+
+    <h3>Media Protection (MP)</h3>
+    <div class="control-group">
+        <strong>MP-2:</strong> Evidence vault data encrypted at rest (AES-256)<br>
+        <strong>MP-6:</strong> Sanitization of decommissioned nodes via DoD 5220.22-M standards
+    </div>
+
+    <h3>Risk Assessment (RA)</h3>
+    <div class="control-group">
+        <strong>RA-3:</strong> Threat assessment covers: blockchain reorg attacks, RPC provider compromise, smart
+        contract vulnerabilities<br>
+        <strong>RA-5:</strong> Vulnerability scanning via static analysis (Bandit/Pylint) integrated into CI/CD
+    </div>
+
+    <h3>System and Communications Protection (SC)</h3>
+    <div class="control-group">
+        <strong>SC-5:</strong> Denial of service protection via automatic gas price throttling and hibernation<br>
+        <strong>SC-13:</strong> Cryptographic protection: HMAC-SHA256 for evidence integrity, ECDSA for transaction
+        signing<br>
+        <strong>SC-20:</strong> Secure name/address resolution via Cloudflare DNSSEC
+    </div>
+
+    <h3>System and Information Integrity (SI)</h3>
+    <div class="control-group">
+        <strong>SI-1:</strong> Flaw remediation via automated GitHub alerts and Dependabot<br>
+        <strong>SI-3:</strong> Malicious code protection via containerized execution and read-only filesystems<br>
+        <strong>SI-4:</strong> System monitoring via Prometheus/Grafana with 15-second granularity
+    </div>
+
+    <h2>3. CUI HANDLING PROCEDURES</h2>
+    <p><strong>Current Status:</strong> No CUI processed in commercial operations. Upon contract award:</p>
+    <ol>
+        <li>CUI will be segregated in isolated VPC environments</li>
+        <li>Encryption in transit (TLS 1.3) and at rest (AES-256)</li>
+        <li>Access logging per AU-6 standards</li>
+        <li>Annual training for all personnel with CUI access</li>
+    </ol>
+
+    <h2>4. COMPLIANCE ROADMAP</h2>
+    <ul>
+        <li><strong>Q1 2026:</strong> Finalize SSP, complete NIST 800-171 gap assessment</li>
+        <li><strong>Q2 2026:</strong> CMMC Level 2 audit and certification</li>
+        <li><strong>Ongoing:</strong> Continuous monitoring via automated evidence vault integrity checks</li>
+    </ul>
+
+    <div class="footer">
+        <strong>Prepared by:</strong> Coleman Willis | <strong>Title:</strong> Site Reliability Engineer<br>
+        <em>This document contains preliminary data subject to update upon formal contract award.</em>
+    </div>
+
+</body>
+
+</html>

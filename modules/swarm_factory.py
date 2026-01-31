@@ -44,9 +44,14 @@ class SwarmFactory:
     """
     The Forge: Instantiates and manages the swarm.
     """
-    def __init__(self, config_path="config.json"):
+    def __init__(self, config_input="config.json"):
         # Load the Genetic Blueprint
-        self.config = self._load_config(config_path)
+        if isinstance(config_input, dict):
+            self.config = config_input
+            print(f"[FACTORY] :: CONFIG INJECTED :: {len(self.config.get('clones', [])) if 'clones' in self.config else 'Unknown'} entries")
+        else:
+            self.config = self._load_config(config_input)
+            
         self.mode = os.getenv("MODE", "SIMULATION")  # Default to Safety
         self.w3 = None
         
@@ -113,7 +118,7 @@ class SwarmFactory:
                 clone = GenesisClone(
                     clone_id=clone_id,
                     config=clone_config,
-                    w3=self.w3
+                    web3_interface=self.w3
                 )
                 print(f"[FACTORY] :: SPAWNED :: {clone_id} (LIVE - {clone_config['target_symbol']})")
             else:

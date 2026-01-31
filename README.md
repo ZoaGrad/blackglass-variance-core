@@ -105,3 +105,5 @@ Real-world validation of the Blackglass Variance Engine against sovereign-grade 
 
 ---
 *Built with Google Antigravity. Capable of being deployed as a standalone agent or integrated into existing observability stacks.*
+
+**Maintained by:** Coleman Willis ([colemanwillis@blackglasscontinuum.com](mailto:colemanwillis@blackglasscontinuum.com))

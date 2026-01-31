@@ -27,7 +27,7 @@ while ($true) {
         
         # Launch the swarm (blocks until crash or manual termination)
         Set-Location $WorkDir
-        python run_species.py 2>&1 | Tee-Object -FilePath $LogFile -Append
+        python -u run_species.py 1>> $LogFile 2>> "$WorkDir\error.log"
         
         $exitCode = $LASTEXITCODE
         Write-Host "[SWARM] :: TERMINATED :: Exit Code $exitCode" -ForegroundColor Yellow

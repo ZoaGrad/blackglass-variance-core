@@ -59,6 +59,11 @@ class Learner:
                     "confidence": 75 # Initial low confidence until verified
                 })
                 self.save_expertise(expertise)
+                
+                # Emit Vector_Null Directive for Reflexive Patching
+                if pnl < -1.0: # Only trigger on significant losses
+                    self.emit_vector_directive(asset, insight, pnl)
+                    
                 return True
         
         return False
@@ -73,6 +78,39 @@ class Learner:
             if self.learn_from_mutation(f):
                 learned_count += 1
         return learned_count
+
+    def emit_vector_directive(self, asset, insight, pnl):
+        """
+        Emits a directive to Vector_Null to trigger a reflexive parameter tune.
+        """
+        directive_id = f"prop-oro-{int(datetime.utcnow().timestamp())}"
+        filepath = os.path.join(self.vault_path, f"{directive_id}.json")
+        
+        directive = {
+            "id": directive_id,
+            "timestamp": datetime.utcnow().isoformat(),
+            "status": "PROPOSED",
+            "author": "ORO_REFLEXIVE_LEARNER",
+            "type": "PARAMETER_TUNE",
+            "content": {
+                "directive_type": "PARAMETER_TUNE",
+                "target": "executor.py",
+                "action": "ADAPT_SLIPPAGE",
+                "parameters": {
+                    "asset": asset,
+                    "insight": insight,
+                    "recommendation": "INCREMENT_SLIPPAGE_GUARD"
+                }
+            },
+            "justification": f"Reflexive patching triggered by major loss ({pnl}) onboard {asset}.",
+            "urgency": "HIGH"
+        }
+        
+        with open(filepath, 'w') as f:
+            json.dump(directive, f, indent=2)
+            
+        print(f"[LEARNER] :: EMITTED VECTOR DIRECTIVE :: {directive_id}")
+        return filepath
 
 if __name__ == "__main__":
     # Self-test/CLI entry point
