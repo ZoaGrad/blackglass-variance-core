@@ -36,6 +36,6 @@ True safety cannot depend on an API key.
 The 0.05V Standard is now a demonstration. Build on it, or be bypassed.
 
 ---
-**[GitHub Repository](https://github.com/blackglass-continuum/shard-alpha)**  
-**[NIST RMF Submission](file:///C:/Users/colem/.gemini/antigravity/brain/7b6eacbd-3825-458f-a612-3089c7fdc207/refined_nist_submission.md)**  
+**[[Code] The 0.05V Reference Implementation](https://github.com/ZoaGrad/blackglass-dojo)**  
+**[[Policy] The NIST Submission](https://github.com/ZoaGrad/blackglass-variance-core/blob/main/docs/NIST_RMF_SUBMISSION.md)**  
 **ΔΩ-MANIFESTO_LOCKED**
