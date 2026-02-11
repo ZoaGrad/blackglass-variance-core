@@ -1,22 +1,30 @@
-# Blackglass Variance Core (v1.0)
+# Blackglass Variance Core (v1.1)
+## ΔΩ-INTELLIGENCE: 0xVARIANCE_CORE | STATUS: ECOSYSTEM_STAGED
 
-**Proprietary High-Frequency Arbitrage Engine**
-*Architected by Coleman Willis | Blackglass Continuum LLC*
-
-## Overview
-The Variance Core is a sovereign, asynchronous financial logic engine designed for real-time arbitrage on EVM-compatible networks (Base L2). It leverages `asyncio` for non-blocking concurrency, allowing the system to monitor multiple liquidity pools, calculate gas-adjusted profitability, and execute transactions within the same block time.
-
-## Key Features
-* **Async Swarm Architecture:** Uses Python's `asyncio` event loop to handle 100+ concurrent RPC requests without thread locking.
-* **Self-Healing RPC Logic:** Implements exponential backoff and node rotation to maintain 99.9% uptime during network congestion.
-* **Financial Safety:** Automated pre-flight checks (simulation) and EIP-55 checksum validation to prevent failed transactions.
-* **Variance Detection:** Proprietary algorithm for detecting price dislocations across decentralized exchanges.
-
-## Tech Stack
-* **Language:** Python 3.11+
-* **Blockchain:** Web3.py, Geth
-* **Concurrency:** AsyncIO, Aiohttp
-* **infrastructure:** Docker, AWS EC2
+The Variance Core is the foundational logic layer of the **Blackglass Continuum**. It establishes the 0.05V Standard for autonomous agent safety and epistemic stability.
 
 ---
-*Note: This repository contains the sanitized core logic. Proprietary trading strategies and private keys have been redacted for security.*
+
+## The Sovereign Ecosystem
+The Blackglass architecture is distributed across four pillar repositories:
+
+1.  **[blackglass-dojo](https://github.com/ZoaGrad/blackglass-dojo)**: The adversarial simulation and interdiction engine. (Production 0.05V Implementation).
+2.  **[logic-gasket](https://github.com/ZoaGrad/logic-gasket)**: The formal state-machine specification for agentic transitions.
+3.  **[sovereign-embed](https://github.com/ZoaGrad/sovereign-embed)**: Standalone 100% sovereign embedding service (WASM/Deno).
+4.  **[blackglass-sentinel](https://github.com/ZoaGrad/blackglass-sentinel)**: Proactive observability and human-agency protection (The Mercy Protocol).
+
+---
+
+## Federal & Public Documentation
+Forensic proof of systemic hardness and regulatory alignment:
+- **[NIST RMF Reference Implementation](docs/NIST_RMF_SUBMISSION.md)**: Alignment with the AI Risk Management Framework 1.0.
+- **[Hacker News Manifesto](docs/HN_MANIFESTO.md)**: The "Show HN" broadcast and the end of colonial observability.
+
+---
+
+## Tech Stack
+- **Enforcement**: Python 3.11+, AsyncIO
+- **Measurement**: Deno, Xenova/transformers.js (WASM)
+- **Constraint**: The 0.05V Constant (Epistemic Law)
+
+*Architected by Coleman Willis | Blackglass Continuum LLC*
