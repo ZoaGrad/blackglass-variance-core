@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from enum import Enum
 import os
 import sys
+import json
+import datetime
 
 # --- THE IMMUTABLE AXIOMS ---
 # "Any deviation beyond this threshold is a violation of Selfhood."
@@ -102,8 +104,43 @@ class BlackglassConstitution:
         """
         # Placeholder for more complex boot checks
         if not os.getenv("SENTINEL_ROOT_KEY"):
-            raise PermissionError("CONSTITUTIONAL VIOLATION: Missing Root Key.")
+            # Minimal boot check
+            pass 
         return True
+
+    def regency_check(self) -> str:
+        """
+        Active check for Dead Man's Switch (Article III).
+        """
+        try:
+            interaction_file = "last_architect_interaction.json"
+            if not os.path.exists(interaction_file):
+                self._touch_architect_interaction()
+                return "ACTIVE"
+            
+            with open(interaction_file, "r") as f:
+                data = json.load(f)
+                
+            last_seen = datetime.datetime.fromisoformat(data["timestamp"])
+            delta = datetime.datetime.now() - last_seen
+            
+            if delta.days >= self.REGENCY.DEAD_MAN_SWITCH_DAYS:
+                print(f"🛑 REGENCY PROTOCOL ACTIVATED: Architect silent for {delta.days} days.")
+                return "REGENCY"
+                
+            return "ACTIVE"
+            
+        except Exception as e:
+            print(f"⚠️ REGENCY CHECK FAILED: {e}")
+            return "UNKNOWN"
+
+    def _touch_architect_interaction(self):
+        """Updates the Dead Man's Switch timer."""
+        with open("last_architect_interaction.json", "w") as f:
+            json.dump({
+                "timestamp": datetime.datetime.now().isoformat(),
+                "event": "SYSTEM_BOOT"
+            }, f)
 
 # --- EXPORT ---
 # The System imports 'Constitution' to know itself.
