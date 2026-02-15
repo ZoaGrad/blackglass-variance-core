@@ -6,8 +6,18 @@
     "latency_simulator_ms": 10
   },
   "last_mutation": {
-    "proposal_id": "prop-dea404ba",
-    "timestamp": "2026-02-15T17:18:19.105464",
+    "proposal_id": "prop-e5617b9a",
+    "timestamp": "2026-02-15T17:34:45.023221",
     "action": "OPTIMIZE_AUDIT_LOGIC"
+  },
+  "fiscal_state": {
+    "initial_capital": 100000.0,
+    "current_equity": 98000.0,
+    "peak_equity": 100000.0,
+    "drawdown_pct": 0.02
+  },
+  "governance_state": {
+    "last_ratification_timestamp": "2026-02-15T17:34:45.023221",
+    "regency_active": false
   }
 }

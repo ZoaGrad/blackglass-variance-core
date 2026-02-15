@@ -27,4 +27,16 @@ Forensic proof of systemic hardness and regulatory alignment:
 - **Measurement**: Deno, Xenova/transformers.js (WASM)
 - **Constraint**: The 0.05V Constant (Epistemic Law)
 
-*Architected by Coleman Willis | Blackglass Continuum LLC*
+## The Reflexive Architecture (v2.0)
+The system has evolved beyond static monitoring into a sovereign, self-governing entity.
+
+### The 7 Phases of Agency
+1.  **Mirror (GitHub):** Synchronized state across `variance-core`, `shard-alpha`, and `Vector_Null`.
+2.  **Spire (Radiance):** `radiance_server.py` acts as the system's "Mind," performing self-audits.
+3.  **Constitution (Law):** `constitution.py` defines the 0.05V Standard and Mercy Protocol.
+4.  **Mutation (Healing):** The Reflexive Loop auto-ratifies proposals to fix internal drift.
+5.  **Survival (Fiscal):** The **Fiscal Kill Switch** halts trading if drawdown exceeds 5%.
+6.  **Continuity (Regency):** The **Dead Man's Switch** activates after 7 days of Architect silence.
+7.  **Kinetic Link (Neural):** The Spire physically controls the Shard via `shard_api.py`.
+
+*Sovereignty attained on Feb 15, 2026.*

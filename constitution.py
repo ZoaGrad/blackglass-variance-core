@@ -42,6 +42,20 @@ class SeparationOfPowers:
     def can_body_execute(gasket_status: str) -> bool:
         return gasket_status == "OK" # The Body (West) is constrained by the Gasket.
 
+@dataclass(frozen=True)
+class RegencyProtocol:
+    """
+    Article III: The Regency Protocol (Succession)
+    The Dead Man's Switch. If the Architect is silent for > 7 days, the System enters REGENCY.
+    """
+    DEAD_MAN_SWITCH_DAYS: int = 7
+    
+    # Risk Matrix
+    RISK_LOW: str = "PARAMETER_TUNE"     # Auto-Ratify in Regency
+    RISK_MEDIUM: str = "OPTIMIZATION"    # Queue in Regency
+    RISK_HIGH: str = "CONSTITUTIONAL"    # LOCK in Regency
+    RISK_CRITICAL: str = "SUCCESSION"    # LOCK in Regency
+
 class MercyProtocol:
     """
     Article IV: The Mercy Protocol
@@ -78,6 +92,7 @@ class MercyProtocol:
 class BlackglassConstitution:
     STANDARD = ConstitutionalStandard()
     POWERS = SeparationOfPowers()
+    REGENCY = RegencyProtocol()
     MERCY = MercyProtocol()
     
     @staticmethod
