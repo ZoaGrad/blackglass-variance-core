@@ -125,7 +125,7 @@ class OracleHunter:
                 # Fallback: Try lowercasing
                 try:
                     checksum_address = Web3.to_checksum_address(token_address.lower())
-                except:
+                except Exception:
                     print(f"[HUNTER] :: FATAL :: Invalid address format: {token_address}")
                     return None
             
@@ -238,7 +238,7 @@ class OracleHunter:
                     slot0 = pool.functions.slot0().call()
                     if slot0[0] != 0:
                         return pool_address, fee
-            except:
+            except Exception:
                 continue
                 
         return None, None
