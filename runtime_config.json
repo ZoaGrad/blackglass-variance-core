@@ -17,7 +17,13 @@
     "drawdown_pct": 0.02
   },
   "governance_state": {
-    "last_ratification_timestamp": "2026-02-15T17:34:45.023221",
-    "regency_active": false
+    "last_ratification_timestamp": 1771178400,
+    "regency_active": false,
+    "sovereign_decree": {
+      "id": "Y36-001",
+      "directive": "MAINTAIN_COHERENCE",
+      "priority": "SURVIVAL",
+      "timestamp": "2026-02-15T12:00:00Z"
+    }
   }
 }
