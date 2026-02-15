@@ -1,0 +1,13 @@
+{
+  "system_version": "1.0",
+  "audit_logic": {
+    "caching": "ENABLED",
+    "batch_size": 1,
+    "latency_simulator_ms": 10
+  },
+  "last_mutation": {
+    "proposal_id": "prop-dea404ba",
+    "timestamp": "2026-02-15T17:18:19.105464",
+    "action": "OPTIMIZE_AUDIT_LOGIC"
+  }
+}

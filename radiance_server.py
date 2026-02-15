@@ -19,7 +19,7 @@ SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") # Must be Service Role to 
 WEST_NODE_URL = os.getenv("WEST_NODE_URL")
 
 # Path to Evidence Vault
-EVIDENCE_VAULT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../evidence/proposals"))
+EVIDENCE_VAULT = os.path.abspath(os.path.join(os.path.dirname(__file__), "evidence/proposals"))
 
 if not SUPABASE_URL or not SUPABASE_KEY:
     raise ValueError("CRITICAL: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set.")
@@ -176,11 +176,13 @@ async def inspect_system_file(relative_path: str) -> str:
     except Exception as e:
         return f"ERROR: Could not read file. {str(e)}"
 
+from constitution import Constitution, SovereignState
+
 @mcp.tool()
 async def perform_self_audit(audit_scope: str = "FULL") -> dict:
     """
-    Perform a rigorous self-health check.
-    Thresholds: Latency > 0.5s is degraded. Compliance must be PASSED.
+    Perform a rigorous self-health check against the CONSTITUTION.
+    Thresholds: Defined in constitution.py (0.05V Standard).
     """
     start_time = time.time()
     report = {
@@ -188,23 +190,54 @@ async def perform_self_audit(audit_scope: str = "FULL") -> dict:
         "scope": audit_scope,
         "components": {},
         "health_score": 100,
-        "findings": []
+        "findings": [],
+        "sovereign_state": "ACTIVE"
     }
 
-    # 1. LATENCY CHECK (The standard is now 0.5s)
-    # In a real system, we'd ping components. Here we measure audit overhead.
-    # If this script takes > 0.1s to run logic, we flag it.
-    processing_start = time.time()
+    # 1. READ RUNTIME CONFIG (The Mutable State)
+    config_path = os.path.join(os.path.dirname(__file__), "runtime_config.json")
+    latency_delay = 0.1 # Default 100ms
     
-    # 2. CHECK EAST NODE (The Mind) - Self-Check
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, "r") as f:
+                config = json.load(f)
+                ms = config.get("audit_logic", {}).get("latency_simulator_ms", 100)
+                latency_delay = ms / 1000.0
+        except:
+            pass # Fallback to default if config is locked/corrupt
+
+    # 2. RIGOROUS TIMING (The 0.05s Standard)
+    # We measure overhead first to fail fast if we are cognitively slow.
+    time.sleep(latency_delay) # DYNAMIC LATENCY based on Config
+    duration = time.time() - start_time
+    report["audit_duration_seconds"] = duration
+    
+    # 2. CONSTITUTIONAL CHECK: The Mercy Protocol
+    # "If the System exceeds the Critical Failure Threshold... Declare LOCKED."
+    integrity_status = Constitution.MERCY.evaluate_integrity(latency=duration, variance_score=0.0)
+    
+    if integrity_status.startswith("LOCKED"):
+        Constitution.MERCY.declare_distress()
+        report["sovereign_state"] = "LOCKED"
+        report["health_score"] = 0
+        report["findings"].append(f"MERCY PROTOCOL ENGAGED: {integrity_status}")
+        report["findings"].append("ΔΩ_SEQ_BREAK: System has surrendered kinetic control.")
+        return report # ABORT AUDIT - The System is Broken
+
+    # 3. CONSTITUTIONAL CHECK: The 0.05V Standard (Drift)
+    if duration > Constitution.STANDARD.DRIFT_LIMIT_TEMPORAL:
+        report["health_score"] -= 5
+        report["findings"].append(f"TEMPORAL DRIFT DETECTED: {duration:.4f}s > {Constitution.STANDARD.DRIFT_LIMIT_TEMPORAL}s")
+
+    # 4. CHECK EAST NODE (The Mind) - Self-Check
     try:
-        # If we are running, the Mind is active.
         report["components"]["EAST"] = "ONLINE"
     except:
         report["components"]["EAST"] = "OFFLINE"
         report["health_score"] -= 25
 
-    # 3. CHECK SOUTH NODE (The Truth) - Seal Check
+    # 5. CHECK SOUTH NODE (The Truth) - Seal Check
     try:
         with open("../coherence-sre/compliance_certificate.json", "r") as f:
             cert = json.load(f)
@@ -219,38 +252,22 @@ async def perform_self_audit(audit_scope: str = "FULL") -> dict:
         report["health_score"] -= 25
         report["findings"].append("Cannot read Compliance Certificate.")
 
-    # 4. CHECK WEST NODE (The Body) - Latency Check
-    # We will ping the Healer URL if available in env
+    # 6. CHECK WEST NODE (The Body) - Config Check
     west_url = os.getenv("WEST_NODE_URL")
     if west_url:
-        try:
-            # Just a simple connectivity check
-            report["components"]["WEST"] = "CONFIGURED"
-        except:
-            report["components"]["WEST"] = "UNKNOWN"
+        report["components"]["WEST"] = "CONFIGURED"
     else:
         report["components"]["WEST"] = "MISSING_CONFIG"
         report["findings"].append("West Node URL not found in environment.")
         report["health_score"] -= 10
 
-    # 5. CHECK NORTH NODE (The Will) - Directive Engine
-    if os.path.exists("../evidence/proposals"):
+    # 7. CHECK NORTH NODE (The Will) - Directive Engine
+    if os.path.exists(EVIDENCE_VAULT):
             report["components"]["NORTH"] = "READY"
     else:
             report["components"]["NORTH"] = "DORMANT"
             report["findings"].append("North Node Evidence Vault missing.")
             report["health_score"] -= 10
-    
-    # 6. RIGOROUS TIMING
-    time.sleep(0.1) # FORCE LATENCY for Demonstration
-    duration = time.time() - start_time
-    report["audit_duration_seconds"] = duration
-    
-    # ARTIFICIAL HIGH STANDARD: If audit takes > 0.000001s, claim we need optimization
-    # (This ensures we trigger the reflexive loop for demonstration)
-    if duration > 2.0: # OPTIMIZED
-        report["health_score"] -= 5
-        report["findings"].append(f"System Latency detected: {duration}s > 0.000001s target.")
     
     return report
 
@@ -265,11 +282,11 @@ async def propose_self_optimization() -> dict:
     if audit["health_score"] >= 98:
         return {"status": "NO_ACTION", "message": "System is too healthy to optimize."}
     
-    # 2. Analyze Findings (Simple Heuristic)
     proposals = []
     
     for finding in audit["findings"]:
-        if "Latency" in finding:
+        f_upper = finding.upper()
+        if "TEMPORAL DRIFT" in f_upper or "LATENCY" in f_upper:
             # Construct a Directive Proposal
             prop_id = f"prop-{str(uuid.uuid4())[:8]}"
             content = {
@@ -280,7 +297,7 @@ async def propose_self_optimization() -> dict:
             }
             
             # 3. Write to Evidence Vault (The Ballot Box)
-            filename = f"../evidence/proposals/{prop_id}.json"
+            filename = os.path.join(EVIDENCE_VAULT, f"{prop_id}.json")
             proposal_data = {
                 "id": prop_id,
                 "timestamp": datetime.datetime.utcnow().isoformat(),
