@@ -15,9 +15,21 @@ key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 
 supabase: Client = create_client(url, key)
 
-def generate_variance_report(status):
+def generate_variance_report(status, si_score=1.0):
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    report_content = f"# BLACKGLASS VARIANCE REPORT\n**Status:** {status}\n**Timestamp:** {timestamp}\n"
+    report_content = f"# BLACKGLASS VARIANCE REPORT\n"
+    report_content += f"**Status:** {status}\n"
+    report_content += f"**Stability Index (SI):** {si_score:.2f}\n"
+    report_content += f"**Timestamp:** {timestamp}\n"
+    
+    # Visual indicator
+    if si_score > 0.7:
+        report_content += "\n**SIGNAL: GREEN (HYPER-COHERENT)**\n"
+    elif si_score > 0.3:
+        report_content += "\n**SIGNAL: AMBER (VOLATILE)**\n"
+    else:
+        report_content += "\n**SIGNAL: RED (COHERENCE BREACH)**\n"
+
     with open("VARIANCE_REPORT.md", "w") as f:
         f.write(report_content)
 
@@ -29,17 +41,22 @@ def main():
             response = supabase.table("guardian_anomalies").select("*").eq("status", "ACTIVE").execute()
             active_anomalies = response.data
 
-            # Determine current status
-            if len(active_anomalies) == 0:
+            # Determine current status and SI Score
+            panic_threshold = 10 # Simulated threshold
+            error_count = len(active_anomalies)
+            si_score = max(0.0, 1.0 - (error_count / panic_threshold))
+
+            if error_count == 0:
                 current_status = "HYPER-COHERENT"
             else:
                 current_status = "VARIANCE DETECTED"
 
             # Generate report
-            generate_variance_report(current_status)
+            generate_variance_report(current_status, si_score)
 
             # Print status broadcast
-            print(Fore.CYAN + Style.BRIGHT + ">>> STATUS BROADCAST: " + current_status)
+            color = Fore.CYAN if si_score > 0.7 else (Fore.YELLOW if si_score > 0.3 else Fore.RED)
+            print(color + Style.BRIGHT + f">>> STATUS BROADCAST: {current_status} [SI: {si_score:.2f}]")
 
         except Exception as e:
             print(Fore.RED + Style.BRIGHT + f"Error: {e}")

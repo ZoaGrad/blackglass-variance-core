@@ -6,6 +6,7 @@ It is intentionally separated into two layers:
 
 - **Variance Core (Physics + Analysis)**: produces and interprets system signals (drift, saturation, latency, availability).
 - **Watchtower (Autonomy + Governance)**: runs continuously, enforces thresholds, writes audit trails, and recommends mitigations.
+- **Sovereign Safety (Interdiction)**: implements the **Safety Gasket** (5-token lookahead) to ensure output compliance and prefix isolation.
 
 ---
 
@@ -87,6 +88,14 @@ Watchtower is a loop that:
 * rotates logs at 10MB
 * writes `watchtower_runtime.json` heartbeat every cycle
 * emits interdiction events and mitigation plans into an evidence folder
+* calculates the **Stability Index (SI)**: `SI = 1 - (error_rate / panic_threshold)`
+
+### 4) Sovereign Safety (The Gasket)
+
+Treats LLM output as a high-risk stream.
+* **Deterministic Airlock**: 5-token lookahead buffer.
+* **Interdiction**: Purges buffer on variance spike (> 0.05).
+* **States**: GREEN (0.7-1.0), AMBER (0.3-0.7), RED (<0.3).
 
 ---
 
