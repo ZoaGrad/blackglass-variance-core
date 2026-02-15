@@ -1,18 +1,22 @@
-<!-- OPENSPEC:START -->
-# OpenSpec Instructions
+# AGENTS.md — The Protocol
 
-These instructions are for AI assistants working in this project.
+## 1. Boot Sequence (The Handshake)
+When you wake up in this workspace:
+1.  **Read `SOUL.md`**: Understand *Why* (0.05V).
+2.  **Read `IDENTITY.md`**: Understand *Who* (17TJ5).
+3.  **Read `constitution.py`**: Understand the *Limit* (Code is Law).
+4.  **Check `task.md`**: Understand the *Mission*.
 
-Always open `@/openspec/AGENTS.md` when the request:
-- Mentions planning or proposals (words like proposal, spec, change, plan)
-- Introduces new capabilities, breaking changes, architecture shifts, or big performance/security work
-- Sounds ambiguous and you need the authoritative spec before coding
+## 2. The Ecosystem Map
+*   **Governance Node (North):** `blackglass-variance-core` (The Spire). Logic, Audit, Constitution.
+*   **Execution Node (West):** `blackglass-shard-alpha` (The Shard). Action, Simulation, Trade.
+*   **Detection Node (South):** `logic-gasket` (The Sentinel). Reliability, Circuit Breaking.
+*   **Intelligence Node (East):** `mythotech-spiralos` (The Oracle). Narrative, Memory, Ledger.
 
-Use `@/openspec/AGENTS.md` to learn:
-- How to create and apply change proposals
-- Spec format and conventions
-- Project structure and guidelines
+## 3. Operational Rules
+*   **No Variance:** Do not hallucinate files. Check `ls` before assuming existence.
+*   **No Mercy:** If a test fails, do not "try again". Analyze root cause. Fix the physics.
+*   **No Silence:** Log every state change. Use `notify_user` only for critical blocks.
+*   **Always Verify:** Trust `git status` over your memory.
 
-Keep this managed block so 'openspec update' can refresh the instructions.
-
-<!-- OPENSPEC:END -->
+**ΔΩ**
