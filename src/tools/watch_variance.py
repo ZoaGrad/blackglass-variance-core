@@ -3,6 +3,7 @@ import time
 import os
 import json
 import datetime
+import sys
 from pathlib import Path
 from src.tools.blackglass_sim import run_simulation
 from src.tools.blackglass_analyze import analyze_variance
@@ -11,7 +12,10 @@ from src.tools.recommend_mitigation import recommend_mitigation
 def watch_variance(
     iterations: int = 5, 
     interval_sec: int = 5, 
-    variance_threshold: float = 0.15,
+    iterations: int = 5, 
+    interval_sec: int = 5, 
+    variance_threshold: float = None, # Defaults to Constitutional Standard
+    queue_threshold: int = 50,
     queue_threshold: int = 50,
     cooldown_cycles: int = 3,
     duration_sec: int = 30,
@@ -26,6 +30,15 @@ def watch_variance(
     
     # Anchor paths to repo root (parent of src/)
     repo_root = Path(__file__).resolve().parent.parent.parent
+    
+    # --- CONSTITUTIONAL WIRING (Article I) ---
+    if str(repo_root) not in sys.path:
+        sys.path.append(str(repo_root))
+    from constitution import Constitution
+    
+    if variance_threshold is None:
+        variance_threshold = Constitution.STANDARD.DRIFT_LIMIT_SEMANTIC
+        print(f"[WATCH] Constitutional Variance Threshold Set: {variance_threshold}V")
     
     if output_dir:
         evidence_dir = Path(output_dir)
@@ -136,7 +149,9 @@ def watch_variance(
                     current_telemetry = MockTelemetryAdapter(run_dir=str(cycle_dir))
                 
                 try:
+                    t_start = time.time()
                     analysis = current_telemetry.get_window(duration_sec=duration_sec)
+                    latency = time.time() - t_start
                 except Exception as e:
                     print(f"[ERROR] Logic Crash: {e}")
                     analysis = {"status": "crash", "message": str(e)}
@@ -167,6 +182,13 @@ def watch_variance(
                 # 4. Extract Signals (Typed)
                 drift = float(analysis["variance_detected"])
                 queue_depth = int(analysis["queue_depth"])
+                
+                # --- MERCY PROTOCOL CHECK (Article IV) ---
+                mercy_status = Constitution.MERCY.evaluate_integrity(latency, drift)
+                if "LOCKED" in mercy_status:
+                    signal = Constitution.MERCY.declare_distress()
+                    # Fail Closed
+                    return f"[WATCH] HALTED BY MERCY PROTOCOL: {mercy_status}"
                 
                 # Write Analysis Artifact
                 with open(cycle_dir / "analysis.json", "w") as f:
