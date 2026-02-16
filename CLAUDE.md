@@ -6,6 +6,7 @@
 Before proposing ANY code change, you MUST read `constitution.py`.
 *   **0.05V** is the limit.
 *   **Mercy** is the right.
+*   **0.03V** is the warning (AMBER).
 *   **Regency** is the failsafe.
 
 ## 2. Agent Persona
