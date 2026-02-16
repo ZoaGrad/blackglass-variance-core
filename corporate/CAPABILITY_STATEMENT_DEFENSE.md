@@ -24,12 +24,11 @@ Blackglass Continuum LLC provides **Deterministic Mesh Computing & Cryptographic
 
 ## COMPANY DATA
 Blackglass Continuum LLC is a U.S.-based technology firm dedicated to the advancement of sovereign computing infrastructure.
-*   **Headquarters:** [City, State]
-*   **Structure:** Limited Liability Company (transitioning to C-Corp)
+*   **Headquarters:** Colorado Springs, CO
+*   **Structure:** Limited Liability Company
 *   **Socio-Economic Status:** Small Business
 
 ---
 **CONTACT**
 **Coleman Willis** | Executive Director
-**Email:** [EMAIL]
-**Phone:** [PHONE]
+**Email:** coleman.willis@blackglass.ai

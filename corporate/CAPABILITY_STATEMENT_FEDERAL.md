@@ -6,7 +6,7 @@
 **NAICS Codes:** 541511, 541512, 541519, 541611, 541690  
 **Business Type:** Small Business, Minority-Owned, Small Disadvantaged Business  
 **Primary Point of Contact:** Coleman Willis, Site Reliability Engineer  
-**Location:** Colorado Springs, CO / Aurora, CO  
+**Location:** Colorado Springs, CO  
 
 ---
 
@@ -46,7 +46,7 @@ Advanced variance detection algorithms for financial anomaly detection and autom
 ### CLEARANCES & CERTIFICATIONS
 
 - **NIST 800-171 SSP:** Draft complete; finalizing CUI handling procedures
-- **CMMC Level 2:** Target certification Q2 2025
+- **CMMC Level 2:** Target certification Q4 2026
 - **FAR Compliance:** Established accounting systems for cost-type contracts
 
 ---
