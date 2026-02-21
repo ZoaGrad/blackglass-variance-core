@@ -62,11 +62,16 @@ def watch_variance(
         # We'll pass the *current cycle's* dir dynamically or set base?
         # The Mock adapter currently wraps analyze_variance which takes a run_dir.
         # Let's instantiate it per cycle or pass None here and handle in loop?
-        # Better: The Mock adapter in our impl expects run_dir in constructor. 
-        # But we change run_dir every cycle. 
+        # Better: The Mock adapter in our impl expects run_dir in constructor.
+        # But we change run_dir every cycle.
         # Refactor: We will instantiate inside the loop for Mock, or pass root?
         # Simplest consistent way: Instantiate in loop for Mock.
-        pass 
+        pass
+    elif telemetry_mode == "air_node":
+        from src.adapters.telemetry.air_node import AirNodeTelemetryAdapter
+        telemetry_adapter = AirNodeTelemetryAdapter()
+        print(f"[WATCH] A.I.R. VaultNode: {telemetry_adapter.base_url}")
+        print(f"[WATCH] Incident window: {telemetry_adapter.window_sec}s | Saturation: {telemetry_adapter.saturation_rate} inc/min")
     elif telemetry_mode == "prometheus":
         from src.adapters.telemetry.prometheus import PrometheusTelemetryAdapter
         telemetry_adapter = PrometheusTelemetryAdapter()

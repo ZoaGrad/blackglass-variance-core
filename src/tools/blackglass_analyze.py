@@ -106,65 +106,93 @@ def _find_engine_entrypoint():
     return None
 
 
-def _calculate_fallback_variance(metrics: list) -> dict:
+def _calculate_fallback_variance(
+    metrics: list,
+    norm_incident_rate: float = 0.0,
+) -> dict:
     """
     Deterministic drift calculation from metrics.
     Returns: { "drift": float, "details": dict }
-    Logic: 
-      - Latency Standard Deviation (Dispersion)
-      - Queue Slope (Trend)
+
+    Three-signal composite V(t):
+      1. Latency Dispersion  — std dev of latency_ms (infrastructure)
+      2. Queue Trend         — linear regression slope on queue depth (infrastructure)
+      3. Incident Rate       — normalized A.I.R. VaultNode incident rate (semantic)
+
+    Weights (sum to 1.0):
+      dispersion : 0.50  (leading indicator — infrastructure stress)
+      trend      : 0.30  (leading indicator — saturation trajectory)
+      incidents  : 0.20  (lagging indicator — confirmed semantic breach)
+
+    Incident weight is intentionally lower: incidents are confirmed breaches
+    (high signal, low noise) but lagged. Infrastructure signals are leading.
+    Even at weight 0.20, a norm_incident_rate of 1.0 contributes 0.20V —
+    enough to push a clean system (dispersion=0, trend=0) to 0.20V, which
+    clears the 0.03V AMBER threshold and triggers the Reflexive Loop.
+    At moderate infrastructure stress, any incidents immediately breach 0.05V.
     """
     if not metrics:
-        return {"drift": 0.0, "details": {}}
-        
+        # No infrastructure metrics — rely on incident signal alone
+        drift_score = 0.20 * norm_incident_rate
+        return {
+            "drift": float(drift_score),
+            "details": {
+                "reason": "no_infrastructure_metrics",
+                "norm_incident_rate": float(norm_incident_rate),
+            },
+        }
+
     latencies = [m.get("latency_ms", 0) for m in metrics]
     queues = [m.get("queue_depth", 0) for m in metrics]
-    timestamps = [m.get("timestamp", 0) for m in metrics] # Assuming relative or absolute TS exists, or index
 
     # 1. Dispersion: Standard Deviation of Latency
     n = len(latencies)
     if n < 2:
-        return {"drift": 0.0, "details": {"reason": "insufficient_data"}}
-        
+        drift_score = 0.20 * norm_incident_rate
+        return {
+            "drift": float(drift_score),
+            "details": {
+                "reason": "insufficient_data",
+                "norm_incident_rate": float(norm_incident_rate),
+            },
+        }
+
     mean_lat = sum(latencies) / n
     variance_lat = sum((x - mean_lat) ** 2 for x in latencies) / n
     std_lat = math.sqrt(variance_lat)
-    
-    # Normalize dispersion: Assume > 50ms stddev is "high" (drift=1.0)
+
+    # Normalize dispersion: > 50ms stddev maps to 1.0
     norm_dispersion = min(std_lat / 50.0, 1.0)
 
-    # 2. Trend: Slope of Queue Depth
-    # Simple linear regression slope for queue depth over time (steps)
-    # x = step index, y = queue depth
-    # slope = (n * sum(xy) - sum(x)*sum(y)) / (n * sum(x^2) - sum(x)^2)
-    # Using step index is robust enough for fallback.
-    
+    # 2. Trend: Linear regression slope of queue depth over time steps
     sum_x = sum(range(n))
     sum_y = sum(queues)
     sum_xy = sum(i * q for i, q in enumerate(queues))
     sum_xx = sum(i * i for i in range(n))
-    
+
     denom = (n * sum_xx - sum_x * sum_x)
-    if denom == 0:
-        slope = 0
-    else:
-        slope = (n * sum_xy - sum_x * sum_y) / denom
-        
-    # Normalize trend: > 1.0 item/step increase is "high"
-    norm_trend = min(max(slope, 0) / 1.0, 1.0) # Only responsive to increasing queues
-    
-    # Combined Drift Score
-    # Weight: 60% dispersion, 40% trend
-    drift_score = (0.6 * norm_dispersion) + (0.4 * norm_trend)
-    
+    slope = 0.0 if denom == 0 else (n * sum_xy - sum_x * sum_y) / denom
+
+    # Normalize trend: > 1.0 items/step maps to 1.0 (only rising queues)
+    norm_trend = min(max(slope, 0) / 1.0, 1.0)
+
+    # 3. Composite V(t)
+    # Weights: dispersion=0.50, trend=0.30, incidents=0.20
+    drift_score = (
+        (0.50 * norm_dispersion)
+        + (0.30 * norm_trend)
+        + (0.20 * norm_incident_rate)
+    )
+
     return {
         "drift": float(drift_score),
         "details": {
             "latency_std_ms": float(std_lat),
             "queue_slope_per_step": float(slope),
             "norm_dispersion": float(norm_dispersion),
-            "norm_trend": float(norm_trend)
-        }
+            "norm_trend": float(norm_trend),
+            "norm_incident_rate": float(norm_incident_rate),
+        },
     }
 
 
@@ -255,7 +283,7 @@ def analyze_variance(run_dir="runs/run_latest", duration_sec=30, fault_time="14:
     # For now, we assume engine output is unstructured text, so we rely on Python Fallback 
     # for the canonical 'variance_detected' signal to ensure causality.
     
-    fallback = _calculate_fallback_variance(metrics)
+    fallback = _calculate_fallback_variance(metrics, norm_incident_rate=0.0)
     variance_score = fallback["drift"]
     variance_details = fallback["details"]
     source = "python_fallback"
