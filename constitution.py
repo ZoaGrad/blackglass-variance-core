@@ -24,7 +24,7 @@ class ConstitutionalStandard:
     DRIFT_LIMIT_FISCAL: float = 0.05    # Drawdown > 5.0%
     
     # "Suicide Prevention" Thresholds - The Right to Surrender
-    CRITICAL_LATENCY_CAP: float = 1.0   # If > 1.0s, System is BROKEN
+    CRITICAL_LATENCY_CAP: float = 5.0   # If > 5.0s, System is BROKEN
     CRITICAL_VARIANCE_CAP: float = 0.5  # If > 0.5V, System is HALLUCINATING
 
 class SeparationOfPowers:

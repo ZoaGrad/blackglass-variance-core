@@ -4,6 +4,7 @@ import os
 import json
 import datetime
 import sys
+sys.stdout.reconfigure(encoding='utf-8')
 from pathlib import Path
 from src.tools.blackglass_sim import run_simulation
 from src.tools.blackglass_analyze import analyze_variance
@@ -12,10 +13,7 @@ from src.tools.recommend_mitigation import recommend_mitigation
 def watch_variance(
     iterations: int = 5, 
     interval_sec: int = 5, 
-    iterations: int = 5, 
-    interval_sec: int = 5, 
     variance_threshold: float = None, # Defaults to Constitutional Standard
-    queue_threshold: int = 50,
     queue_threshold: int = 50,
     cooldown_cycles: int = 3,
     duration_sec: int = 30,
