@@ -81,6 +81,10 @@ def watch_variance(
     elif actuation_mode == "k8s":
         from src.adapters.actuation.k8s import KubernetesActuationAdapter
         actuation_adapter = KubernetesActuationAdapter()
+    elif actuation_mode == "shard_alpha":
+        from src.adapters.actuation.shard_alpha import ShardAlphaActuationAdapter
+        actuation_adapter = ShardAlphaActuationAdapter()
+        print(f"[WATCH] Shard Alpha Actuation: {actuation_adapter.base_url}/interdict")
 
     interdictions = []
     last_interdiction_cycle = -999
